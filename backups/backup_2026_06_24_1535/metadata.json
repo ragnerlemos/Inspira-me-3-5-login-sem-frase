@@ -1,0 +1,8 @@
+{
+  "name": "InspiraMe 3.0",
+  "description": "Plataforma avançada de criação e edição de conteúdo, gerador de frases inspiradoras, editor de vídeo com filtros, efeitos especiais e modelos personalizados para redes sociais.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

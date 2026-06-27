@@ -1,0 +1,10 @@
+export const firebaseConfig = {
+  "projectId": "quotevid2-57726828-e0133",
+  "appId": "1:523999002605:web:36f7a0523a201db5ebb1e4",
+  "apiKey": "AIzaSyDIL526ANILG04FR5g8sUbyAwktS1C7-sY",
+  "authDomain": "quotevid2-57726828-e0133.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-fe4ddd16-b913-4130-8017-47000ade1350",
+  "storageBucket": "quotevid2-57726828-e0133.firebasestorage.app",
+  "messagingSenderId": "523999002605",
+  "measurementId": ""
+};

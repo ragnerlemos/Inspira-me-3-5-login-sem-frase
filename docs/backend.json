@@ -1,0 +1,162 @@
+
+{
+  "entities": {
+    "Quote": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Quote",
+      "type": "object",
+      "description": "Represents a quote, including its text, author, and associated metadata.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the quote."
+        },
+        "text": {
+          "type": "string",
+          "description": "The actual text content of the quote."
+        },
+        "author": {
+          "type": "string",
+          "description": "The author of the quote."
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to Category. (Relationship: Category 1:N Quote)"
+        },
+        "dateAdded": {
+          "type": "string",
+          "description": "The date and time when the quote was added.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "author",
+        "categoryId",
+        "dateAdded"
+      ]
+    },
+    "Video": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Video",
+      "type": "object",
+      "description": "Represents a video, including its URL, title, and associated metadata.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the video."
+        },
+        "url": {
+          "type": "string",
+          "description": "The URL of the video."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the video."
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to Category. (Relationship: Category 1:N Video)"
+        },
+        "dateAdded": {
+          "type": "string",
+          "description": "The date and time when the video was added.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "url",
+        "title",
+        "categoryId",
+        "dateAdded"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a category for grouping quotes and videos.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the category."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the category."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the category."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous",
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores category information.  Categories are globally accessible.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique identifier for the category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "quotes/{quoteId}",
+        "definition": {
+          "entityName": "Quote",
+          "schema": {
+            "$ref": "#/backend/entities/Quote"
+          },
+          "description": "Stores quote information. Quotes are globally accessible.",
+          "params": [
+            {
+              "name": "quoteId",
+              "description": "The unique identifier for the quote."
+            }
+          ]
+        }
+      },
+      {
+        "path": "videos/{videoId}",
+        "definition": {
+          "entityName": "Video",
+          "schema": {
+            "$ref": "#/backend/entities/Video"
+          },
+          "description": "Stores video information. Videos are globally accessible.",
+          "params": [
+            {
+              "name": "videoId",
+              "description": "The unique identifier for the video."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to securely store and manage quotes, videos, and categories for the InspiraMe app. The design prioritizes Authorization Independence to simplify security rules and ensure atomic operations. It also focuses on structural segregation to ensure that all documents in a collection share the same security requirements, improving maintainability.\n\n**Authorization Independence:**  Authorization Independence is achieved by structuring the data in a way that minimizes the need for `get()` calls in security rules.  Since there are no collaborative features, we achieve Authorization Independence via Path-Based ownership.\n\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations by ensuring that each collection contains only data that the user is authorized to access. Path-based ownership on User-Owned data ensures secure lists."
+  }
+}

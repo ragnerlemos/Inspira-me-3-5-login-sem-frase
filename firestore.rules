@@ -1,0 +1,44 @@
+/**
+ * @fileoverview Firestore Security Rules for InspiraMe2.
+ *
+ * Core Philosophy:
+ * This ruleset is now configured for public read and write access.
+ * All collections are globally accessible for all operations.
+ *
+ * Data Structure:
+ * - /categories/{categoryId}: Stores category information.
+ * - /quotes/{quoteId}: Stores quote information.
+ * - /videos/{videoId}: Stores video information.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Grants public read and write access to categories.
+     * @path /categories/{categoryId}
+     * @allow (read, write): Anyone can read and modify category data.
+     */
+    match /categories/{categoryId} {
+      allow read, write: if true;
+    }
+
+    /**
+     * @description Grants public read and write access to quotes.
+     * @path /quotes/{quoteId}
+     * @allow (read, write): Anyone can read and modify quote data.
+     */
+    match /quotes/{quoteId} {
+      allow read, write: if true;
+    }
+
+    /**
+     * @description Grants public read and write access to videos.
+     * @path /videos/{videoId}
+     * @allow (read, write): Anyone can read and modify video data.
+     */
+    match /videos/{videoId} {
+      allow read, write: if true;
+    }
+  }
+}
