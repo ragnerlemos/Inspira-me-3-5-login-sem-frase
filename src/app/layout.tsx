@@ -1,6 +1,5 @@
 import { Providers } from "./providers";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
-import { GoogleSheetsProvider } from "@/components/google-sheets/google-sheets-provider";
 import "./globals.css";
 
 // Este é o Layout Raiz. Ele aplica estilos globais e provedores de tema.
@@ -21,9 +20,7 @@ export default function RootLayout({
       <body className="font-body antialiased h-full">
         <FirebaseClientProvider>
           <Providers>
-            <GoogleSheetsProvider>
-              {children}
-            </GoogleSheetsProvider>
+            {children}
           </Providers>
         </FirebaseClientProvider>
       </body>

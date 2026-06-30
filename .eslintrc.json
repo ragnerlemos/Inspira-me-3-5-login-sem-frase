@@ -1,5 +1,6 @@
 {
   "extends": "next/core-web-vitals",
+  "ignorePatterns": ["src/lib/android/**"],
   "rules": {
     "react/no-unescaped-entities": "off"
   }

@@ -1,14 +1,18 @@
 
+import '@/lib/google-auth-patch';
 import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID?.replace(/^["']|["']$/g, '');
 const TEMPLATE_SHEET_NAME = 'Modelo';
+
+const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.replace(/^["']|["']$/g, '');
+const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/^["']|["']$/g, '').replace(/\\n/g, '\n');
 
 const auth = new google.auth.GoogleAuth({
   credentials: {
-    client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    client_email: clientEmail,
+    private_key: privateKey,
   },
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });

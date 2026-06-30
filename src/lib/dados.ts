@@ -1,10 +1,14 @@
 
+import '@/lib/google-auth-patch';
 import { google } from 'googleapis';
+
+const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.replace(/^["']|["']$/g, '');
+const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/^["']|["']$/g, '').replace(/\\n/g, '\n');
 
 const auth = new google.auth.GoogleAuth({
   credentials: {
-    client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    client_email: clientEmail,
+    private_key: privateKey,
   },
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
@@ -137,7 +141,7 @@ export async function getAllSheetNames(forceRefresh = false): Promise<string[]> 
     }
 
     try {
-        const spreadsheetId = process.env.SPREADSHEET_ID;
+        const spreadsheetId = process.env.SPREADSHEET_ID?.replace(/^["']|["']$/g, '');
         if (!spreadsheetId) {
             console.error('SPREADSHEET_ID não está definido no ambiente.');
             return [];
@@ -147,9 +151,14 @@ export async function getAllSheetNames(forceRefresh = false): Promise<string[]> 
             spreadsheetId
         });
         
+        const ignoredSheetNames = ['modelo', 'diversos', '#dados'];
         const sheetNames = spreadsheetMeta.data.sheets
             ?.map(sheet => sheet.properties?.title)
-            .filter((title): title is string => !!title);
+            .filter((title): title is string => {
+                if (!title) return false;
+                const normalized = title.trim().toLowerCase();
+                return !ignoredSheetNames.includes(normalized);
+            });
         
         if (!sheetNames || sheetNames.length === 0) {
             console.warn('Nenhuma aba válida encontrada na planilha.');
@@ -178,7 +187,7 @@ export async function getAllQuotes(forceRefresh = false): Promise<QuoteWithAutho
     }
 
     try {
-        const spreadsheetId = process.env.SPREADSHEET_ID;
+        const spreadsheetId = process.env.SPREADSHEET_ID?.replace(/^["']|["']$/g, '');
         if (!spreadsheetId) {
             console.error('SPREADSHEET_ID não está definido no ambiente.');
             return [];

@@ -15,9 +15,6 @@ import { onAuthStateChanged, type User } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { useGoogleSheets } from '@/components/google-sheets/google-sheets-provider';
-import { useSheetQuotes } from '@/components/google-sheets/use-sheet-quotes';
-import { SheetSelector } from '@/components/google-sheets/sheet-selector';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -497,10 +494,6 @@ export function FrasesClientPage({
   
   const [quoteForMeme, setQuoteForMeme] = useState<{ quote: QuoteWithAuthor; action: 'preview' | 'share'; } | null>(null);
 
-  const { isConnected, spreadsheetId, sheetName } = useGoogleSheets();
-  const { fetchQuotes, isLoading: isImporting } = useSheetQuotes();
-  const [isSheetSelectorOpen, setIsSheetSelectorOpen] = useState(false);
-
   const { favorites, toggleFavorite } = useFavorites();
   const { hiddenQuotes, hideQuote } = useHiddenQuotes();
   const auth = useAuth();
@@ -605,18 +598,6 @@ export function FrasesClientPage({
     setIsRefreshing(true);
 
     try {
-      if (isConnected && spreadsheetId && sheetName) {
-        const customQuotes = await fetchQuotes();
-        if (customQuotes) {
-          setAllQuotes(customQuotes);
-          if (!silent) {
-            toast({ title: 'Planilha Conectada', description: `Frases carregadas de: ${sheetName}` });
-          }
-          setIsRefreshing(false);
-          return;
-        }
-      }
-
       // Invalida cache no servidor primeiro
       await fetchWithBase('/api/invalidate-cache', { method: 'POST' });
       
@@ -888,22 +869,11 @@ export function FrasesClientPage({
         {searchInput}
         <Button
           variant="outline"
-          onClick={() => setIsSheetSelectorOpen(true)}
-          className={cn(
-            "w-full justify-start text-base font-semibold px-3 py-2 rounded-md mb-2",
-            isConnected && spreadsheetId ? "border-green-500/50 text-green-500" : "border-slate-800"
-          )}
-        >
-          <FileSpreadsheet className="mr-2 h-4 w-4" />
-          {isConnected && spreadsheetId ? "Planilha Conectada" : "Conectar Planilha"}
-        </Button>
-        <Button
-          variant="outline"
           onClick={handleRefreshQuotes}
-          disabled={isRefreshing || isImporting}
+          disabled={isRefreshing}
           className="w-full justify-start text-base font-semibold px-3 py-2 rounded-md"
         >
-          {isRefreshing || isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+          {isRefreshing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
           Atualizar
         </Button>
         <Button
@@ -1060,7 +1030,6 @@ const getCardClasses = () => {
   
   return (
     <>
-      <SheetSelector open={isSheetSelectorOpen} onOpenChange={setIsSheetSelectorOpen} />
       <Sheet open={isCategorySheetOpen} onOpenChange={setIsCategorySheetOpen}>
         <SheetContent 
           side="left" 
@@ -1294,6 +1263,12 @@ const getCardClasses = () => {
                     </Card>
                   );
                 })}
+              </div>
+            ) : allQuotes.length === 0 ? (
+              <div className="text-center py-20 bg-card border rounded-lg flex flex-col items-center">
+                <FileSpreadsheet className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                <h2 className="text-2xl font-semibold mb-2">Não há dados cadastrados</h2>
+                <p className="text-muted-foreground">A planilha do Google está vazia ou não contém frases válidas.</p>
               </div>
             ) : (
               <div className="text-center py-20 bg-card border rounded-lg flex flex-col items-center">
