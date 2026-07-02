@@ -20,7 +20,7 @@ export interface EditorContextType {
   dropShadowStyle: EstiloTexto;
   undo: () => void;
   redo: () => void;
-  updateState: (newState: Partial<EditorState>) => void;
+  updateState: (newState: Partial<EditorState>, skipHistory?: boolean) => void;
   setInitialState: (initialState: EditorState) => void;
   onSaveAsTemplate: () => Promise<void>;
   onExportJPG: () => void;
@@ -77,17 +77,39 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   }, [currentState]);
 
   const setInitialState = useCallback((initialState: EditorState) => {
-    setHistory([initialState]);
+    const stateWithDefaults = {
+      ...initialState,
+      logoZIndex: initialState.logoZIndex ?? 30,
+      textZIndex: initialState.textZIndex ?? 20,
+      signatureZIndex: initialState.signatureZIndex ?? 10,
+      backgroundStyle: {
+        ...initialState.backgroundStyle,
+        blur: initialState.backgroundStyle.blur ?? 0,
+        brightness: initialState.backgroundStyle.brightness ?? 100,
+        contrast: initialState.backgroundStyle.contrast ?? 100,
+        grayscale: initialState.backgroundStyle.grayscale ?? 0,
+        sepia: initialState.backgroundStyle.sepia ?? 0,
+        hueRotate: initialState.backgroundStyle.hueRotate ?? 0,
+      }
+    };
+    setHistory([stateWithDefaults]);
     setCurrentStateIndex(0);
     setIsReady(true);
   }, []);
 
-  const updateState = useCallback((newState: Partial<EditorState>) => {
+  const updateState = useCallback((newState: Partial<EditorState>, skipHistory = false) => {
     if (!isReady || !currentState) return;
     const nextState = { ...currentState, ...newState };
-    const newHistory = history.slice(0, currentStateIndex + 1);
-    setHistory([...newHistory, nextState]);
-    setCurrentStateIndex(newHistory.length);
+    
+    if (skipHistory) {
+      const newHistory = [...history];
+      newHistory[currentStateIndex] = nextState;
+      setHistory(newHistory);
+    } else {
+      const newHistory = history.slice(0, currentStateIndex + 1);
+      setHistory([...newHistory, nextState]);
+      setCurrentStateIndex(newHistory.length);
+    }
   }, [isReady, currentState, currentStateIndex, history]);
 
   const applyTemplate = useCallback((templateState: Partial<EditorState>, strategy: 'merge' | 'replace' = 'merge') => {

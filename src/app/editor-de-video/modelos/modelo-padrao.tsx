@@ -5,6 +5,8 @@ import { EMOJI_REGEX } from '../utils/text-style-utils';
 import type { ProfileData } from '@/hooks/use-profile';
 import { ResizableTextBox } from '../components/resizable-text-box';
 
+import Image from 'next/image';
+
 interface ModeloPadraoProps {
     editorState: EditorState;
     baseTextStyle: EstiloTexto;
@@ -48,6 +50,9 @@ export function ModeloPadrao({
         logoPositionY,
         logoScale,
         logoOpacity,
+        logoZIndex,
+        textZIndex,
+        signatureZIndex,
         textBoxWidth,
         textBoxHeight,
     } = editorState;
@@ -84,7 +89,7 @@ export function ModeloPadrao({
                     top: `${textVerticalPosition}%`,
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    zIndex: 1,
+                    zIndex: textZIndex ?? 20,
                     ...dropShadowStyle,
                 }}
             >
@@ -109,9 +114,16 @@ export function ModeloPadrao({
             </div>
 
             {showLogo && profile.logo && (
-                <div className="absolute" style={{ zIndex: 2, top: `${logoPositionY}%`, left: `${logoPositionX}%`, transform: 'translate(-50%, -50%)' }}>
-                    <div style={{ transform: `scale(${logoScale / 100})`, opacity: logoOpacity / 100 }}>
-                        <img src={profile.logo} alt="Logomarca" className="max-w-[150px] max-h-[150px]" />
+                <div className="absolute" style={{ zIndex: logoZIndex ?? 30, top: `${logoPositionY}%`, left: `${logoPositionX}%`, transform: 'translate(-50%, -50%)' }}>
+                    <div style={{ transform: `scale(${logoScale / 100})`, opacity: logoOpacity / 100 }} className="relative w-[150px] h-[150px]">
+                        <Image 
+                            src={profile.logo} 
+                            alt="Logomarca" 
+                            fill 
+                            className="object-contain" 
+                            unoptimized 
+                            referrerPolicy="no-referrer"
+                        />
                     </div>
                 </div>
             )}
@@ -119,7 +131,7 @@ export function ModeloPadrao({
                 <div 
                   className="absolute" 
                   style={{ 
-                    zIndex: 2, 
+                    zIndex: signatureZIndex ?? 10, 
                     top: `${signaturePositionY}%`, 
                     left: `${signaturePositionX}%`, 
                     transform: `translate(-50%, -50%) scale(${signatureScale / 100})`, 

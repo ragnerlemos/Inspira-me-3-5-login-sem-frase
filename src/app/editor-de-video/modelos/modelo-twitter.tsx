@@ -5,6 +5,7 @@
 import type { ProfileData } from "@/hooks/use-profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Twitter } from "lucide-react";
+import Image from 'next/image';
 import type { EditorState, EstiloTexto } from "../tipos";
 import { AssinaturaPerfil } from "./assinatura-perfil";
 import { ResizableTextBox } from "../components/resizable-text-box";
@@ -95,8 +96,15 @@ export function ModeloTwitter({
             
             {showLogo && profile.logo && (
                 <div className="absolute" style={{ zIndex: 2, top: `${logoPositionY}%`, left: `${logoPositionX}%`, transform: 'translate(-50%, -50%)' }}>
-                    <div style={{ transform: `scale(${logoScale / 100})`, opacity: logoOpacity / 100 }}>
-                        <img src={profile.logo} alt="Logomarca" className="max-w-[150px] max-h-[150px]" />
+                    <div style={{ transform: `scale(${logoScale / 100})`, opacity: logoOpacity / 100 }} className="relative w-[150px] h-[150px]">
+                        <Image 
+                            src={profile.logo} 
+                            alt="Logomarca" 
+                            fill 
+                            className="object-contain" 
+                            unoptimized 
+                            referrerPolicy="no-referrer"
+                        />
                     </div>
                 </div>
             )}

@@ -5,6 +5,7 @@ import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Moon, Sun, Laptop } from "lucide-react"
+import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -71,6 +72,19 @@ export default function SettingsPage() {
                     </div>
                     )}
                 </CardContent>
+                </Card>
+                <Card className="mt-8 border-2 border-primary/20 bg-primary/5">
+                  <CardHeader>
+                    <CardTitle className="text-primary">Assinatura Premium</CardTitle>
+                    <CardDescription>
+                      Desbloqueie recursos exclusivos e eleve seu conteúdo.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button asChild className="w-full">
+                      <Link href="/premium">Assinar Agora</Link>
+                    </Button>
+                  </CardContent>
                 </Card>
             </div>
       </div>

@@ -10,6 +10,12 @@ export type TipoFundo = 'media' | 'solid' | 'gradient';
 export type EstiloFundo = {
     type: TipoFundo;
     value: string;
+    blur?: number;
+    brightness?: number;
+    contrast?: number;
+    grayscale?: number;
+    sepia?: number;
+    hueRotate?: number;
 };
 
 export interface EditorState {
@@ -55,6 +61,9 @@ export interface EditorState {
     logoPositionY: number;
     logoScale: number;
     logoOpacity: number;
+    logoZIndex?: number;
+    textZIndex?: number;
+    signatureZIndex?: number;
 }
 
 export interface EditorControlState {

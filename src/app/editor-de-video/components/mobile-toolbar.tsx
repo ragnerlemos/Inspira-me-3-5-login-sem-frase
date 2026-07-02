@@ -90,7 +90,7 @@ const PREDEFINED_COLORS = [
 
 type ActivePanel = "texto" | "canvas" | "cores" | "filtro" | "fundo" | "assinatura" | "logo" | "estilo" | "modelos" | null;
 type TipoFundoAtivo = 'media' | 'solid' | 'gradient';
-import { ControleModelos } from "./sidebar";
+import { ControleModelos } from "./sidebar-modelos";
 
 
 function ControleTipoFundo({ backgroundStyle, setBackgroundStyle }: { backgroundStyle: EstiloFundo, setBackgroundStyle: (style: EstiloFundo) => void }) {

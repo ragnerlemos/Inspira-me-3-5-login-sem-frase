@@ -16,10 +16,24 @@ import {
   PlusSquare,
   ChevronLeft,
   Edit,
+  ChevronDown,
+  CreditCard,
+  Moon,
 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { NavLink } from '@/components/ui/nav-link';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { AuthButton } from './auth-button';
@@ -41,9 +55,46 @@ function SettingsNavigationLinks({ onLinkClick }: { onLinkClick?: () => void }) 
     return (
         <>
             <NavLink href="/cadastro" icon={PlusSquare} label="Cadastro" onClick={onLinkClick} />
-            <NavLink href="/configuracoes" icon={Settings} label="Configurações" onClick={onLinkClick} />
-            <NavLink href="/perfil" icon={UserIcon} label="Perfil" onClick={onLinkClick} />
+            <NavLink href="/perfil" icon={UserIcon} label="Central de Marca" onClick={onLinkClick} />
         </>
+    )
+}
+
+function SettingsDropdown({ onLinkClick }: { onLinkClick?: () => void }) {
+    const { theme, setTheme } = useTheme();
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-9 px-2 text-muted-foreground hover:text-primary gap-1">
+                    <Settings className="w-4 h-4" />
+                    <span className="hidden lg:inline">Configurações</span>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 border-border bg-popover/95 backdrop-blur-md">
+                <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5">Sua Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <Link href="/assinatura" onClick={onLinkClick}>
+                    <DropdownMenuItem className="cursor-pointer focus:bg-primary/10">
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        <span>Assinatura</span>
+                    </DropdownMenuItem>
+                </Link>
+                <DropdownMenuSeparator />
+                <div className="flex items-center justify-between px-2 py-1.5">
+                    <div className="flex items-center gap-2">
+                        <Moon className="w-4 h-4 text-muted-foreground" />
+                        <Label htmlFor="dark-mode" className="text-sm cursor-pointer">Modo Escuro</Label>
+                    </div>
+                    <Switch 
+                        id="dark-mode"
+                        checked={theme === 'dark'}
+                        onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                    />
+                </div>
+            </DropdownMenuContent>
+        </DropdownMenu>
     )
 }
 
@@ -94,11 +145,12 @@ export function AppHeader() {
         </nav>
 
         {/* Seção Direita: Configurações, Perfil */}
-        <div className="flex items-center gap-2 pr-2">
+        <div className="flex items-center gap-2 pr-2 ml-auto">
             <nav className="flex items-center gap-1">
                 <SettingsNavigationLinks />
             </nav>
             <Separator orientation="vertical" className="h-8 mx-2" />
+            <SettingsDropdown />
             <AuthButton />
         </div>
       </div>
@@ -142,7 +194,10 @@ export function AppHeader() {
                 <ChevronLeft className="h-6 w-6" />
               </Button>
             ) : (
-              <AuthButton />
+              <>
+                <SettingsDropdown />
+                <AuthButton />
+              </>
             )}
         </div>
       </div>

@@ -18,6 +18,7 @@ export interface ProfileData {
   memeFontSize: number;
   memeShowLogo: boolean;
   memeLogoScale: number;
+  brandColors: string[];
   // Novos campos de tema
   themeTitleColor: string;
   themeSubtitleColor: string;
@@ -47,6 +48,7 @@ export const useProfile = () => {
     memeFontSize: 1.3,
     memeShowLogo: false,
     memeLogoScale: 40,
+    brandColors: ["#3b82f6", "#1e293b", "#ffffff"],
     // Valores padrão para o tema
     themeTitleColor: "#3b82f6", // Primary blue roughly
     themeSubtitleColor: "#94a3b8",
@@ -80,6 +82,7 @@ export const useProfile = () => {
             memeFontSize: loadedProfile.memeFontSize !== undefined ? loadedProfile.memeFontSize : defaultState.memeFontSize,
             memeShowLogo: loadedProfile.memeShowLogo !== undefined ? loadedProfile.memeShowLogo : defaultState.memeShowLogo,
             memeLogoScale: loadedProfile.memeLogoScale !== undefined ? loadedProfile.memeLogoScale : defaultState.memeLogoScale,
+            brandColors: loadedProfile.brandColors !== undefined ? loadedProfile.brandColors : defaultState.brandColors,
             // Carregamento dos novos campos de tema com fallback para o defaultState
             themeTitleColor: loadedProfile.themeTitleColor || defaultState.themeTitleColor,
             themeSubtitleColor: loadedProfile.themeSubtitleColor || defaultState.themeSubtitleColor,

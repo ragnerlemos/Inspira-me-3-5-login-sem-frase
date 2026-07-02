@@ -66,19 +66,39 @@ export function PreviewCanva(props: PreviewCanvaProps) {
   const renderBackground = () => {
     if (!backgroundStyle) return <div className="absolute inset-0 bg-black" />;
 
-    const { type, value } = backgroundStyle;
+    const { type, value, blur, brightness, contrast, grayscale, sepia, hueRotate } = backgroundStyle;
+    
+    const filterStyle = {
+      filter: [
+        blur ? `blur(${blur}px)` : '',
+        brightness !== undefined ? `brightness(${brightness}%)` : '',
+        contrast !== undefined ? `contrast(${contrast}%)` : '',
+        grayscale ? `grayscale(${grayscale}%)` : '',
+        sepia ? `sepia(${sepia}%)` : '',
+        hueRotate ? `hue-rotate(${hueRotate}deg)` : '',
+      ].filter(Boolean).join(' ')
+    };
+
     if (type === "media" && value) {
       const mediaType = getMediaType(value);
       if (mediaType === "image") {
-        return <Image src={value} alt="Background" fill className="object-cover" key={value} priority />;
+        return (
+          <div className="absolute inset-0 overflow-hidden" style={filterStyle}>
+            <Image src={value} alt="Background" fill className="object-cover" key={value} priority />
+          </div>
+        );
       }
       if (mediaType === "video") {
-        return <video src={value} autoPlay loop muted className="absolute inset-0 w-full h-full object-cover" key={value} />;
+        return (
+          <div className="absolute inset-0 overflow-hidden" style={filterStyle}>
+            <video src={value} autoPlay loop muted className="absolute inset-0 w-full h-full object-cover" key={value} />
+          </div>
+        );
       }
     } else if (type === "solid") {
-      return <div className="absolute inset-0" style={{ backgroundColor: value }} />;
+      return <div className="absolute inset-0" style={{ backgroundColor: value, ...filterStyle }} />;
     } else if (type === "gradient") {
-      return <div className="absolute inset-0" style={{ background: value }} />;
+      return <div className="absolute inset-0" style={{ background: value, ...filterStyle }} />;
     }
     return <div className="absolute inset-0 bg-black" />;
   };

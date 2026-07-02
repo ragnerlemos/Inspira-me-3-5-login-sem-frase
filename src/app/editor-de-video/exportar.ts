@@ -15,6 +15,20 @@ interface ToastProps {
 }
 type ToastFn = (props: ToastProps) => void;
 
+// Helper function to apply filters to a canvas context
+const applyFiltersToCtx = (ctx: CanvasRenderingContext2D, bg: any) => {
+    if (!bg) return;
+    const filterParts = [
+        bg.blur ? `blur(${bg.blur}px)` : '',
+        bg.brightness !== undefined ? `brightness(${bg.brightness}%)` : '',
+        bg.contrast !== undefined ? `contrast(${bg.contrast}%)` : '',
+        bg.grayscale ? `grayscale(${bg.grayscale}%)` : '',
+        bg.sepia ? `sepia(${bg.sepia}%)` : '',
+        bg.hueRotate ? `hue-rotate(${bg.hueRotate}deg)` : '',
+    ].filter(Boolean).join(' ');
+    ctx.filter = filterParts || 'none';
+};
+
 export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn, state: EditorState, profile: ProfileData, baseTextStyle: EstiloTexto, textEffectsStyle: EstiloTexto, dropShadowStyle: EstiloTexto) => {
     const previewElement = document.getElementById('editor-preview-content');
 
@@ -44,6 +58,9 @@ export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn,
 
         ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, width, height);
+
+        // Apply filters for background
+        applyFiltersToCtx(ctx, state.backgroundStyle);
 
         if (state.backgroundStyle?.type === 'gradient') {
             ctx.fillStyle = state.backgroundStyle.value || '#000';
@@ -75,6 +92,9 @@ export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn,
                 console.warn("[Export] Falha ao capturar frame do vídeo.");
             }
         }
+        
+        // Reset filters for overlay
+        ctx.filter = 'none';
 
         const { toCanvas } = await import('html-to-image');
         const overlayCanvas = await toCanvas(previewElement, {
@@ -340,6 +360,9 @@ export const generateVideoBlob = async (
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, width, height);
 
+      // Apply background filters
+      applyFiltersToCtx(ctx, state.backgroundStyle);
+
       // Fundo Cor/Gradiente
       if (state.backgroundStyle?.type === 'gradient' || state.backgroundStyle?.type === 'solid') {
           ctx.fillStyle = state.backgroundStyle.value || '#000';
@@ -362,6 +385,9 @@ export const generateVideoBlob = async (
         });
         drawCover(backgroundVideo, backgroundVideo.videoWidth, backgroundVideo.videoHeight);
       }
+
+      // Reset filters for overlay
+      ctx.filter = 'none';
 
       // Desenhar Sobreposição (Overlay)
       ctx.drawImage(overlayCanvas, 0, 0, width, height);
