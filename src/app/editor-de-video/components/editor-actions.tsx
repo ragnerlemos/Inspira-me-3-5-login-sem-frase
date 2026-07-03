@@ -16,7 +16,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useEditor } from "../contexts/editor-context";
 import { useToast } from "@/hooks/use-toast";
+import { generateFilename } from '@/lib/utils';
 import { ExportModal, ExportOptions } from "./export-modal";
+
+const getEditorExportMetadata = () => {
+    if (typeof window === 'undefined') {
+        return { category: undefined, subCategory: undefined };
+    }
+    const params = new URLSearchParams(window.location.search);
+    return {
+        category: params.get('category') || undefined,
+        subCategory: params.get('subCategory') || undefined,
+    };
+};
 
 export function EditorActions() {
     const { 
@@ -69,10 +81,12 @@ export function EditorActions() {
                 if (isPreview) {
                    setVideoPreview({ url, blob });
                 } else {
+                   const exportMetadata = getEditorExportMetadata();
                    const extension = blob.type.includes('mp4') ? 'mp4' : 'webm';
+                   const filename = generateFilename(exportMetadata, extension as 'mp4' | 'webm');
                    const link = document.createElement('a');
                    link.href = url;
-                   link.download = `inspire-me-export-${Date.now()}.${extension}`;
+                   link.download = filename;
                    document.body.appendChild(link);
                    link.click();
                    document.body.removeChild(link);
@@ -108,8 +122,9 @@ export function EditorActions() {
     const downloadVideoPreview = () => {
         if (!videoPreview) return;
 
+        const exportMetadata = getEditorExportMetadata();
         const extension = videoPreview.blob.type.includes('mp4') ? 'mp4' : 'webm';
-        const filename = `inspire-me-export-${Date.now()}.${extension}`;
+        const filename = generateFilename(exportMetadata, extension as 'mp4' | 'webm');
 
         if (Capacitor.isNativePlatform()) {
             const reader = new FileReader();
@@ -118,16 +133,9 @@ export function EditorActions() {
                 const base64Data = reader.result?.toString().split('base64,')[1];
                 if (base64Data) {
                     try {
-                        let categoryStr: string | undefined = undefined;
-                        if (typeof window !== 'undefined') {
-                            const params = new URLSearchParams(window.location.search);
-                            const cat = params.get('category');
-                            if (cat) categoryStr = cat;
-                        }
-
                         const { saveFileToAppFolder } = await import('@/lib/file-storage');
-                        await saveFileToAppFolder(base64Data, filename, categoryStr);
-                        toast({ title: 'Sucesso!', description: `Vídeo salvo na pasta Download/InspiraMe/${categoryStr || ''} com sucesso.` });
+                        await saveFileToAppFolder(base64Data, filename);
+                        toast({ title: 'Sucesso!', description: `Vídeo salvo na pasta Download/InspiraMe/${exportMetadata.category || ''} com sucesso.` });
                     } catch (err) {
                         console.error("Erro ao salvar vídeo nativamente:", err);
                         toast({ variant: 'destructive', title: 'Erro ao salvar', description: 'Não foi possível salvar o vídeo.' });

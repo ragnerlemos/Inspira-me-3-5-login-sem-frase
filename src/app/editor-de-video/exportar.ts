@@ -7,6 +7,7 @@ import type { ExportOptions } from './components/export-modal';
 import { getApiUrl } from '@/lib/api-client';
 import { Capacitor } from '@capacitor/core';
 import { saveFileToAppFolder } from '@/lib/file-storage';
+import { generateFilename } from '@/lib/utils';
 
 interface ToastProps {
     variant?: "default" | "destructive" | null | undefined,
@@ -29,6 +30,17 @@ const applyFiltersToCtx = (ctx: CanvasRenderingContext2D, bg: any) => {
     ctx.filter = filterParts || 'none';
 };
 
+const getEditorExportMetadata = () => {
+    if (typeof window === 'undefined') {
+        return { category: undefined, subCategory: undefined };
+    }
+    const params = new URLSearchParams(window.location.search);
+    return {
+        category: params.get('category') || undefined,
+        subCategory: params.get('subCategory') || undefined,
+    };
+};
+
 export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn, state: EditorState, profile: ProfileData, baseTextStyle: EstiloTexto, textEffectsStyle: EstiloTexto, dropShadowStyle: EstiloTexto) => {
     const previewElement = document.getElementById('editor-preview-content');
 
@@ -43,12 +55,14 @@ export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn,
     await new Promise(r => setTimeout(r, 200));
 
     try {
-        const width = previewElement.clientWidth * 2;
-        const height = previewElement.clientHeight * 2;
+        const width = previewElement.offsetWidth;
+        const height = previewElement.offsetHeight;
+        const outputWidth = width * 2;
+        const outputHeight = height * 2;
 
         const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = outputWidth;
+        canvas.height = outputHeight;
         const ctx = canvas.getContext('2d', { alpha: false });
 
         if (!ctx) throw new Error("Falha ao criar canvas.");
@@ -57,17 +71,17 @@ export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn,
         const backgroundImageElement = previewElement.querySelector('img[alt="Background"]') as HTMLImageElement | null;
 
         ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, width, height);
+        ctx.fillRect(0, 0, outputWidth, outputHeight);
 
         // Apply filters for background
         applyFiltersToCtx(ctx, state.backgroundStyle);
 
         if (state.backgroundStyle?.type === 'gradient') {
             ctx.fillStyle = state.backgroundStyle.value || '#000';
-            ctx.fillRect(0, 0, width, height);
+            ctx.fillRect(0, 0, outputWidth, outputHeight);
         } else if (state.backgroundStyle?.type === 'solid') {
             ctx.fillStyle = state.backgroundStyle.value || '#000';
-            ctx.fillRect(0, 0, width, height);
+            ctx.fillRect(0, 0, outputWidth, outputHeight);
         }
 
         if (backgroundImageElement) {
@@ -79,7 +93,7 @@ export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn,
                     bgImg.onload = () => resolve(null);
                     bgImg.onerror = reject;
                 });
-                ctx.drawImage(bgImg, 0, 0, width, height);
+                ctx.drawImage(bgImg, 0, 0, outputWidth, outputHeight);
             } catch (e) {
                 console.warn("[Export] Falha ao carregar fundo de imagem:", e);
             }
@@ -87,7 +101,7 @@ export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn,
 
         if (backgroundVideo) {
             try {
-                ctx.drawImage(backgroundVideo, 0, 0, width, height);
+                ctx.drawImage(backgroundVideo, 0, 0, outputWidth, outputHeight);
             } catch (e) {
                 console.warn("[Export] Falha ao capturar frame do vídeo.");
             }
@@ -96,8 +110,27 @@ export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn,
         // Reset filters for overlay
         ctx.filter = 'none';
 
+        const clone = previewElement.cloneNode(true) as HTMLElement;
+        clone.style.width = `${width}px`;
+        clone.style.height = `${height}px`;
+        clone.style.transform = 'none';
+        clone.style.position = 'relative';
+        clone.style.left = '0';
+        clone.style.top = '0';
+
+        const offscreenRoot = document.createElement('div');
+        offscreenRoot.style.position = 'fixed';
+        offscreenRoot.style.left = '-9999px';
+        offscreenRoot.style.top = '0';
+        offscreenRoot.style.width = `${width}px`;
+        offscreenRoot.style.height = `${height}px`;
+        offscreenRoot.style.overflow = 'hidden';
+        offscreenRoot.style.zIndex = '-1';
+        offscreenRoot.appendChild(clone);
+        document.body.appendChild(offscreenRoot);
+
         const { toCanvas } = await import('html-to-image');
-        const overlayCanvas = await toCanvas(previewElement, {
+        const overlayCanvas = await toCanvas(clone, {
             pixelRatio: 2,
             width,
             height,
@@ -114,25 +147,22 @@ export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn,
             }
         });
 
-        ctx.drawImage(overlayCanvas, 0, 0, width, height);
+        document.body.removeChild(offscreenRoot);
+
+        ctx.drawImage(overlayCanvas, 0, 0, outputWidth, outputHeight);
         
         const quality = format === 'jpeg' ? 1.0 : undefined;
         const dataUrl = canvas.toDataURL(`image/${format}`, quality);
         
+        const quoteMetadata = getEditorExportMetadata();
+        const filename = generateFilename(quoteMetadata, format === 'jpeg' ? 'jpg' : format);
+
         if (Capacitor.isNativePlatform()) {
             const base64Data = dataUrl.split('base64,')[1];
             if (base64Data) {
-                const now = Date.now();
-                const filename = `inspire-me-img-${now}.${format}`;
-                let finalCategory: string | undefined = undefined;
-                if (typeof window !== 'undefined') {
-                    const searchParams = new URLSearchParams(window.location.search);
-                    const cat = searchParams.get('category');
-                    if (cat) finalCategory = cat;
-                }
                 try {
-                    await saveFileToAppFolder(base64Data, filename, finalCategory);
-                    toast({ title: 'Sucesso!', description: `Imagem salva na pasta Download/InspiraMe/${finalCategory || ''}` });
+                    await saveFileToAppFolder(base64Data, filename);
+                    toast({ title: 'Sucesso!', description: `Imagem salva na pasta Download/InspiraMe/${quoteMetadata.category || ''}` });
                 } catch (err) {
                     console.error("Erro ao salvar imagem nativamente:", err);
                     toast({ variant: 'destructive', title: 'Erro de exportação', description: 'Não foi possível salvar a imagem.' });
@@ -143,7 +173,7 @@ export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn,
 
         const link = document.createElement('a');
         link.href = dataUrl;
-        link.download = `inspire-me-img-${Date.now()}.${format}`;
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

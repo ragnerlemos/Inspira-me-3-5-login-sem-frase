@@ -5,9 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function generateFilename(quote: { category?: string; subCategory?: string }, format: 'png' | 'jpeg' | 'jpg'): string {
-    const safeCategory = quote.category?.replace(/\s+/g, '-') || 'Geral';
-    const safeSubCategory = quote.subCategory?.replace(/\s+/g, '-');
+export function generateFilename(
+    quote: { category?: string; subCategory?: string },
+    format: 'png' | 'jpeg' | 'jpg' | 'mp4' | 'webm'
+): string {
+    const safeCategory = quote.category?.trim().replace(/\s+/g, '_') || 'Geral';
+    const safeSubCategory = quote.subCategory?.trim().replace(/\s+/g, '_');
     
     const now = new Date();
     const year = now.getFullYear();
@@ -24,5 +27,6 @@ export function generateFilename(quote: { category?: string; subCategory?: strin
     }
     parts.push(timestamp);
     
-    return `${parts.join('_')}.${format}`;
+    const normalizedFormat = format.toLowerCase();
+    return `${parts.join('_')}.${normalizedFormat}`;
 }
