@@ -30,7 +30,17 @@ const PREDEFINED_COLORS = [
 
 type TipoFundoAtivo = 'media' | 'solid' | 'gradient';
 
-export function ControleTipoFundo({ backgroundStyle, setBackgroundStyle }: { backgroundStyle: EstiloFundo, setBackgroundStyle: (style: EstiloFundo) => void }) {
+export function ControleTipoFundo({ 
+    backgroundStyle, 
+    setBackgroundStyle, 
+    fgColor, 
+    setFgColor 
+}: { 
+    backgroundStyle: EstiloFundo; 
+    setBackgroundStyle: (style: EstiloFundo) => void; 
+    fgColor?: string; 
+    setFgColor?: (color: string) => void; 
+}) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
     
@@ -144,17 +154,33 @@ export function ControleTipoFundo({ backgroundStyle, setBackgroundStyle }: { bac
 
             {activeTab === 'solid' && (
                  <div className="space-y-4">
-                    <div className="space-y-2">
-                        <Label className="text-left">Cor do Fundo</Label>
-                        <div className="relative h-10 w-full rounded-md border overflow-hidden">
-                            <Input 
-                                type="color" 
-                                value={backgroundStyle.type === 'solid' ? backgroundStyle.value : '#333333'} 
-                                onChange={e => handleSolidColorChange(e.target.value)} 
-                                className="absolute inset-0 w-full h-full p-0 border-none cursor-pointer opacity-0"
-                            />
-                            <div className="w-full h-full" style={{ backgroundColor: backgroundStyle.type === 'solid' ? backgroundStyle.value : '#333333' }} />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label className="text-left block">Cor do Fundo</Label>
+                            <div className="relative h-10 w-full rounded-md border overflow-hidden">
+                                <Input 
+                                    type="color" 
+                                    value={backgroundStyle.type === 'solid' ? backgroundStyle.value : '#333333'} 
+                                    onChange={e => handleSolidColorChange(e.target.value)} 
+                                    className="absolute inset-0 w-full h-full p-0 border-none cursor-pointer opacity-0"
+                                />
+                                <div className="w-full h-full" style={{ backgroundColor: backgroundStyle.type === 'solid' ? backgroundStyle.value : '#333333' }} />
+                            </div>
                         </div>
+                        {fgColor && setFgColor && (
+                            <div className="space-y-2">
+                                <Label className="text-left block">Cor do Texto</Label>
+                                <div className="relative h-10 w-full rounded-md border overflow-hidden">
+                                    <Input
+                                        type="color"
+                                        value={fgColor}
+                                        onChange={e => setFgColor(e.target.value)}
+                                        className="absolute inset-0 w-full h-full p-0 border-none cursor-pointer opacity-0"
+                                    />
+                                    <div className="w-full h-full" style={{ backgroundColor: fgColor }} />
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <Label className="text-xs text-muted-foreground block text-left">Cores Predefinidas</Label>

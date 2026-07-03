@@ -177,7 +177,7 @@ export function Sidebar({
                      </div>
                  );
             case 'fundo':
-                return <div className="p-4"><ControleTipoFundo backgroundStyle={backgroundStyle} setBackgroundStyle={setBackgroundStyle} /></div>;
+                return <div className="p-4"><ControleTipoFundo backgroundStyle={backgroundStyle} setBackgroundStyle={setBackgroundStyle} fgColor={fgColor} setFgColor={setFgColor} /></div>;
             case 'modelos':
                 return <div className="p-4"><ControleModelos /></div>;
             case 'assinatura':
