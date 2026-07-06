@@ -234,6 +234,12 @@ export function ControleTipoFundo({
                             ))}
                         </div>
                     </div>
+                    {fgColor && setFgColor && (
+                        <Button variant="outline" className="w-full flex items-center gap-2" onClick={handleInvertColors}>
+                            <FlipHorizontal className="h-4 w-4" />
+                            Inverter Cores
+                        </Button>
+                    )}
                 </div>
             )}
             
