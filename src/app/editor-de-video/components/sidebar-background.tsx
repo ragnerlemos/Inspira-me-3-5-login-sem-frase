@@ -126,6 +126,40 @@ export function ControleTipoFundo({
         handleGradientChange({ ...gradient, direction });
     };
 
+    const normalizeHex = (hex: string) => {
+        const cleaned = hex.replace('#', '');
+        return cleaned.length === 3
+            ? cleaned.split('').map((char) => char + char).join('')
+            : cleaned;
+    };
+
+    const invertHexColor = (color: string) => {
+        const normalized = normalizeHex(color);
+        const r = parseInt(normalized.substring(0, 2), 16);
+        const g = parseInt(normalized.substring(2, 4), 16);
+        const b = parseInt(normalized.substring(4, 6), 16);
+        const invertedR = (255 - r).toString(16).padStart(2, '0');
+        const invertedG = (255 - g).toString(16).padStart(2, '0');
+        const invertedB = (255 - b).toString(16).padStart(2, '0');
+        return `#${invertedR}${invertedG}${invertedB}`;
+    };
+
+    const handleInvertColors = () => {
+        if (!fgColor || !setFgColor) return;
+
+        if (backgroundStyle.type === 'solid') {
+            const currentBg = backgroundStyle.value as string;
+            setBackgroundStyle({ type: 'solid', value: fgColor });
+            setFgColor(currentBg);
+            toast({ title: 'Cores invertidas!' });
+            return;
+        }
+
+        const inverted = invertHexColor(fgColor);
+        setFgColor(inverted);
+        toast({ title: 'Cor do texto invertida!' });
+    };
+
     const handleGradientTypeChange = (type: 'linear' | 'radial') => {
         handleGradientChange({ ...gradient, type });
     }
@@ -267,6 +301,7 @@ export function ControleTipoFundo({
                             <Button variant="outline" size="sm" className="flex-1" onClick={() => handleGradientColorChange(0, '#A06CD5')}>Resetar</Button>
                             <Button variant="outline" size="sm" className="flex-1" onClick={() => handleGradientChange({ ...gradient, colors: [gradient.colors[1], gradient.colors[0]] as [string, string] })}>Alternar cores</Button>
                         </div>
+                        <Button variant="outline" size="sm" className="w-full" onClick={handleInvertColors}>Inverter cores</Button>
                     </div>
                 </div>
             )}
