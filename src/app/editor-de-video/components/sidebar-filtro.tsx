@@ -61,6 +61,20 @@ export function SidebarFiltro({ filmColor, setFilmColor, filmOpacity, setFilmOpa
                         value={[filmOpacity]} 
                         onValueChange={(v) => setFilmOpacity(v[0])} 
                     />
+                    <div className="flex flex-wrap gap-2">
+                        {[10, 20, 30, 40, 50, 60, 70, 80, 90].map((value) => (
+                            <Button
+                                key={value}
+                                type="button"
+                                variant={filmOpacity === value ? 'secondary' : 'outline'}
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => setFilmOpacity(value)}
+                            >
+                                {value}%
+                            </Button>
+                        ))}
+                    </div>
                 </div>
             </div>
 

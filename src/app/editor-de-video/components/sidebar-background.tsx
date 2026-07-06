@@ -251,6 +251,22 @@ export function ControleTipoFundo({
                                 </div>
                             ))}
                         </div>
+                        <div className="flex flex-wrap gap-2 pt-1">
+                            {PREDEFINED_COLORS.map((color) => (
+                                <button
+                                    key={color}
+                                    type="button"
+                                    onClick={() => handleGradientColorChange(0, color)}
+                                    style={{ backgroundColor: color }}
+                                    className="h-7 w-7 rounded-md border border-muted transition-all hover:scale-110 active:scale-95"
+                                    title={`Aplicar ${color}`}
+                                />
+                            ))}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" className="flex-1" onClick={() => handleGradientColorChange(0, '#A06CD5')}>Resetar</Button>
+                            <Button variant="outline" size="sm" className="flex-1" onClick={() => handleGradientChange({ ...gradient, colors: [gradient.colors[1], gradient.colors[0]] as [string, string] })}>Alternar cores</Button>
+                        </div>
                     </div>
                 </div>
             )}

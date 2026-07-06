@@ -947,9 +947,9 @@ export function MobileToolbar({
                     <span className="text-xs text-muted-foreground">{filmOpacity}%</span>
                 </div>
                 <Slider id="film-opacity-mobile" min={0} max={100} step={1} value={[filmOpacity]} onValueChange={(v) => setFilmOpacity(v[0])} />
-                <div className="flex justify-between gap-1">
-                    {[0, 20, 40, 50, 60, 75, 80, 85, 90].map((val) => (
-                        <Button key={val} variant="outline" size="sm" className="h-7 flex-1 text-xs px-0" onClick={() => setFilmOpacity(val)}>
+                <div className="flex flex-wrap gap-1">
+                    {[10, 20, 30, 40, 50, 60, 70, 80, 90].map((val) => (
+                        <Button key={val} variant={filmOpacity === val ? 'secondary' : 'outline'} size="sm" className="h-7 flex-1 min-w-[3rem] text-xs px-0" onClick={() => setFilmOpacity(val)}>
                             {val}%
                         </Button>
                     ))}
