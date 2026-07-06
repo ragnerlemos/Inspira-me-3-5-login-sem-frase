@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Loader2, Share2, Download, Copy } from 'lucide-react';
+import { Loader2, Share2, Download, Copy, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Share } from '@capacitor/share';
@@ -107,7 +107,7 @@ export function MemeGenerator({
                             throw new Error('Permissão de armazenamento não concedida.');
                         }
                         
-                        const { uri } = await saveFileToAppFolder(base64Data, filename, quote.category);
+                        const { uri } = await saveFileToAppFolder(base64Data, filename, quote.category, quote.subCategory);
                         if (!uri) throw new Error("Não foi possível salvar o arquivo na pasta do app.");
                         await Share.share({ url: uri });
                     } catch (error) {
@@ -258,8 +258,8 @@ export function MemeGenerator({
           const base64Data = reader.result?.toString().split('base64,')[1];
           if (base64Data) {
             try {
-              const { uri } = await saveFileToAppFolder(base64Data, filename, quote.category);
-              toast({ title: 'Sucesso!', description: `Meme salvo na pasta Download/InspiraMe/${quote.category || ''}` });
+              const { uri } = await saveFileToAppFolder(base64Data, filename, quote.category, quote.subCategory);
+              toast({ title: 'Sucesso!', description: `Arquivo salvo com sucesso em Downloads/InspireMe/${quote.category || 'Geral'}/${quote.subCategory || 'Geral'}.` });
             } catch (fallbackError) {
               console.error(fallbackError);
               toast({ variant: 'destructive', title: 'Erro ao salvar', description: 'Não foi possível salvar a imagem.' });
@@ -314,6 +314,9 @@ export function MemeGenerator({
   return (
     <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4" onClick={onClose}>
         <div className="relative w-full max-w-sm sm:max-w-md mx-auto" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" onClick={onClose} className="absolute right-3 top-3 z-50 text-white bg-transparent hover:bg-white/5" aria-label="Fechar">
+              <X className="h-5 w-5" />
+            </Button>
             <div className="flex flex-col items-center gap-4 bg-[#020817]/95 border border-slate-800 p-6 rounded-2xl">
                 <MemePreview 
                     memeUrl={memeUrl} 

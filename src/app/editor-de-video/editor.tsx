@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import useWindowSize from "react-use/lib/useWindowSize";
 import { useProfile } from "@/hooks/use-profile";
+import { useProjects } from '@/hooks/use-projects';
 import { Sidebar } from "./components/sidebar";
 import { PreviewCanva } from "./components/preview-canva";
 import { MobileToolbar } from "./components/mobile-toolbar";
@@ -63,6 +64,7 @@ export default function Editor() {
   const { width } = useWindowSize();
   const isDesktop = width >= 768;
   const { profile, isLoaded: isProfileLoaded } = useProfile();
+  const { projects, isLoaded: projectsLoaded } = useProjects();
   const searchParams = useSearchParams();
   const { templates: allTemplates, isLoaded: areTemplatesLoaded } = useTemplates();
   const previewContainerRef = useRef<HTMLDivElement>(null);
@@ -81,11 +83,12 @@ export default function Editor() {
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
-    if (isReady || !isProfileLoaded || !areTemplatesLoaded) return;
+    if (isReady || !isProfileLoaded || !areTemplatesLoaded || !projectsLoaded) return;
 
     const initialize = async () => {
         const quoteParam = searchParams.get("quote");
         const templateIdParam = searchParams.get("templateId");
+        const projectIdParam = searchParams.get('projectId');
         
         let initialState: EditorState;
         const baseState = getInitialState();
@@ -106,7 +109,17 @@ export default function Editor() {
         if (quoteParam) {
             text = decodeURIComponent(quoteParam);
         }
-        
+
+        // If opening from Projects page, load the saved project state
+        if (projectIdParam) {
+            const found = projects.find(p => p.id === projectIdParam);
+            if (found) {
+                initialState = { ...baseState, ...found.editorState, text, activeTemplateId: found.editorState.activeTemplateId || baseState.activeTemplateId };
+                setInitialState(initialState);
+                return;
+            }
+        }
+
         const templateIdToLoad = templateIdParam || baseState.activeTemplateId;
         const template = allTemplates.find(t => t.id === templateIdToLoad);
         

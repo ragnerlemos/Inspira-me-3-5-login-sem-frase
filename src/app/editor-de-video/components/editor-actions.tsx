@@ -15,6 +15,9 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { useEditor } from "../contexts/editor-context";
+import { useProfile } from '@/hooks/use-profile';
+import { useProjects } from '@/hooks/use-projects';
+import { captureThumbnail } from '../exportar';
 import { useToast } from "@/hooks/use-toast";
 import { generateFilename } from '@/lib/utils';
 import { ExportModal, ExportOptions } from "./export-modal";
@@ -38,7 +41,13 @@ export function EditorActions() {
         onExportJPG,
         onExportPNG,
         onExportMP4,
+        currentState,
+        baseTextStyle,
+        textEffectsStyle,
+        dropShadowStyle,
     } = useEditor();
+    const { profile } = useProfile();
+    const { addProject } = useProjects();
     const { toast } = useToast();
     const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
     const [videoPreview, setVideoPreview] = useState<{ url: string; blob: Blob } | null>(null);
@@ -56,9 +65,63 @@ export function EditorActions() {
       };
     }, [videoPreview]);
 
-    const handleSave = () => {
-        // Lógica de salvamento será implementada aqui
-        toast({ title: 'Projeto Salvo!'});
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            const target = event.target as HTMLElement | null;
+            const isEditableTarget = !!target && (
+                target.tagName === 'INPUT' ||
+                target.tagName === 'TEXTAREA' ||
+                target.tagName === 'SELECT' ||
+                target.isContentEditable
+            );
+
+            if (isEditableTarget) return;
+
+            const isUndoShortcut = (event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 'z';
+            const isRedoShortcut = (event.ctrlKey || event.metaKey) && !event.altKey && (
+                event.key.toLowerCase() === 'r' ||
+                event.key.toLowerCase() === 'y' ||
+                (event.key.toLowerCase() === 'z' && event.shiftKey)
+            );
+
+            if (isUndoShortcut) {
+                event.preventDefault();
+                if (canUndo) undo();
+                return;
+            }
+
+            if (isRedoShortcut) {
+                event.preventDefault();
+                if (canRedo) redo();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [canUndo, canRedo, undo, redo]);
+
+    const handleSave = async () => {
+        if (!currentState) {
+            toast({ variant: 'destructive', title: 'Erro', description: 'Estado do editor não disponível.' });
+            return;
+        }
+
+        const name = prompt('Nome do projeto:', 'Meu Projeto') || `Projeto_${new Date().toISOString()}`;
+
+        toast({ title: 'Salvando projeto...', description: 'Gerando miniatura e salvando.' });
+
+        try {
+            // story aspect ratio thumbnail (9:16)
+            const thumbWidth = 360;
+            const thumbHeight = 640;
+            const thumbnail = await captureThumbnail(toast, currentState, profile as any, baseTextStyle, textEffectsStyle, dropShadowStyle, thumbWidth, thumbHeight);
+
+            const id = addProject({ name, thumbnail: thumbnail || '', editorState: currentState });
+            toast({ title: 'Projeto salvo!', description: `O projeto foi salvo e aparecerá em Projetos.` });
+        } catch (err) {
+            console.error('Erro ao salvar projeto:', err);
+            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar o projeto.' });
+        }
     }
 
     const handleOpenExportModal = () => {
@@ -134,8 +197,8 @@ export function EditorActions() {
                 if (base64Data) {
                     try {
                         const { saveFileToAppFolder } = await import('@/lib/file-storage');
-                        await saveFileToAppFolder(base64Data, filename);
-                        toast({ title: 'Sucesso!', description: `Vídeo salvo na pasta Download/InspiraMe/${exportMetadata.category || ''} com sucesso.` });
+                        await saveFileToAppFolder(base64Data, filename, exportMetadata.category, exportMetadata.subCategory);
+                        toast({ title: 'Sucesso!', description: `Arquivo salvo com sucesso em Downloads/InspireMe/${exportMetadata.category || 'Geral'}/${exportMetadata.subCategory || 'Geral'}.` });
                     } catch (err) {
                         console.error("Erro ao salvar vídeo nativamente:", err);
                         toast({ variant: 'destructive', title: 'Erro ao salvar', description: 'Não foi possível salvar o vídeo.' });
@@ -159,10 +222,10 @@ export function EditorActions() {
   return (
     <>
         <div className="hidden md:flex items-center gap-1">
-             <Button variant="ghost" size="icon" onClick={undo} disabled={!canUndo} aria-label="Desfazer">
+             <Button variant="ghost" size="icon" onClick={undo} disabled={!canUndo} aria-label="Desfazer" title="Desfazer (Ctrl+Z)">
                 <Undo2 className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={redo} disabled={!canRedo} aria-label="Refazer">
+            <Button variant="ghost" size="icon" onClick={redo} disabled={!canRedo} aria-label="Refazer" title="Refazer (Ctrl+R / Ctrl+Shift+Z)">
                 <Redo2 className="h-5 w-5" />
             </Button>
             <Button variant="ghost" onClick={handleSave}>

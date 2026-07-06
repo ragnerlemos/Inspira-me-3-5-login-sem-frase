@@ -30,6 +30,12 @@ export interface EditorContextType {
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
+const MAX_HISTORY_LENGTH = 100;
+
+const cloneEditorState = (state: EditorState): EditorState => ({
+  ...state,
+  backgroundStyle: { ...state.backgroundStyle },
+});
 
 export function EditorProvider({ children }: { children: ReactNode }) {
   const [history, setHistory] = useState<EditorState[]>([]);
@@ -92,25 +98,36 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         hueRotate: initialState.backgroundStyle.hueRotate ?? 0,
       }
     };
-    setHistory([stateWithDefaults]);
+    const initialSnapshot = cloneEditorState(stateWithDefaults);
+    setHistory([initialSnapshot]);
     setCurrentStateIndex(0);
     setIsReady(true);
   }, []);
 
   const updateState = useCallback((newState: Partial<EditorState>, skipHistory = false) => {
     if (!isReady || !currentState) return;
-    const nextState = { ...currentState, ...newState };
-    
+
+    const nextState = cloneEditorState({ ...currentState, ...newState });
+
     if (skipHistory) {
-      const newHistory = [...history];
-      newHistory[currentStateIndex] = nextState;
-      setHistory(newHistory);
-    } else {
-      const newHistory = history.slice(0, currentStateIndex + 1);
-      setHistory([...newHistory, nextState]);
-      setCurrentStateIndex(newHistory.length);
+      setHistory((prevHistory) => {
+        if (prevHistory.length === 0) return [nextState];
+        const newHistory = [...prevHistory];
+        const safeIndex = Math.min(Math.max(currentStateIndex, 0), newHistory.length - 1);
+        newHistory[safeIndex] = nextState;
+        return newHistory;
+      });
+      return;
     }
-  }, [isReady, currentState, currentStateIndex, history]);
+
+    setHistory((prevHistory) => {
+      const baseHistory = prevHistory.slice(0, currentStateIndex + 1);
+      const nextHistory = [...baseHistory, nextState];
+      const trimmedHistory = nextHistory.slice(-MAX_HISTORY_LENGTH);
+      setCurrentStateIndex(trimmedHistory.length - 1);
+      return trimmedHistory;
+    });
+  }, [isReady, currentState, currentStateIndex]);
 
   const applyTemplate = useCallback((templateState: Partial<EditorState>, strategy: 'merge' | 'replace' = 'merge') => {
       if (!isReady || !currentState) return;
@@ -153,8 +170,15 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       toast({ title: "Modelo Aplicado!", description: "O estilo foi importado com sucesso." });
   }, [isReady, currentState, updateState, toast]);
 
-  const undo = useCallback(() => { if (canUndo) setCurrentStateIndex(currentStateIndex - 1); }, [canUndo, currentStateIndex]);
-  const redo = useCallback(() => { if (canRedo) setCurrentStateIndex(currentStateIndex + 1); }, [canRedo, currentStateIndex]);
+  const undo = useCallback(() => {
+    if (!canUndo) return;
+    setCurrentStateIndex((prevIndex) => prevIndex - 1);
+  }, [canUndo]);
+
+  const redo = useCallback(() => {
+    if (!canRedo) return;
+    setCurrentStateIndex((prevIndex) => prevIndex + 1);
+  }, [canRedo]);
 
   const onSaveAsTemplate = useCallback(async () => {
     if (!currentState || !profile) return;

@@ -161,8 +161,8 @@ export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn,
             const base64Data = dataUrl.split('base64,')[1];
             if (base64Data) {
                 try {
-                    await saveFileToAppFolder(base64Data, filename);
-                    toast({ title: 'Sucesso!', description: `Imagem salva na pasta Download/InspiraMe/${quoteMetadata.category || ''}` });
+                    await saveFileToAppFolder(base64Data, filename, quoteMetadata.category, quoteMetadata.subCategory);
+                    toast({ title: 'Sucesso!', description: `Arquivo salvo com sucesso em Downloads/InspireMe/${quoteMetadata.category || 'Geral'}/${quoteMetadata.subCategory || 'Geral'}.` });
                 } catch (err) {
                     console.error("Erro ao salvar imagem nativamente:", err);
                     toast({ variant: 'destructive', title: 'Erro de exportação', description: 'Não foi possível salvar a imagem.' });
@@ -186,40 +186,49 @@ export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn,
     }
 };
 
-export const captureThumbnail = async (toast: ToastFn, state: EditorState, profile: ProfileData, baseTextStyle: EstiloTexto, textEffectsStyle: EstiloTexto, dropShadowStyle: EstiloTexto): Promise<string | null> => {
-  const previewElement = document.getElementById('editor-preview-content');
-  if (!previewElement) return null;
+export const captureThumbnail = async (
+    toast: ToastFn,
+    state: EditorState,
+    profile: ProfileData,
+    baseTextStyle: EstiloTexto,
+    textEffectsStyle: EstiloTexto,
+    dropShadowStyle: EstiloTexto,
+    width = 400,
+    height = 400,
+): Promise<string | null> => {
+    const previewElement = document.getElementById('editor-preview-content');
+    if (!previewElement) return null;
   
-  await document.fonts.ready;
-  try {
-     const width = 400;
-     const height = 400;
-     const canvas = document.createElement('canvas');
-     canvas.width = width;
-     canvas.height = height;
-     const ctx = canvas.getContext('2d');
-     if (!ctx) return null;
+    await document.fonts.ready;
+    try {
+         const canvas = document.createElement('canvas');
+         canvas.width = width;
+         canvas.height = height;
+         const ctx = canvas.getContext('2d');
+         if (!ctx) return null;
 
-     const video = previewElement.querySelector('video') as HTMLVideoElement | null;
-     if (video) ctx.drawImage(video, 0, 0, width, height);
+         const video = previewElement.querySelector('video') as HTMLVideoElement | null;
+         if (video) {
+             try { ctx.drawImage(video, 0, 0, width, height); } catch {}
+         }
 
-     const videoStyle = video?.style.getPropertyValue('display') || '';
-     if (video) video.style.display = 'none';
+         const videoStyle = video?.style.getPropertyValue('display') || '';
+         if (video) video.style.display = 'none';
      
-     const { toCanvas } = await import('html-to-image');
-     const overlayCanvas = await toCanvas(previewElement, {
-        pixelRatio: 1,
-        width: width,
-        height: height,
-        backgroundColor: 'transparent'
-      });
+         const { toCanvas } = await import('html-to-image');
+         const overlayCanvas = await toCanvas(previewElement, {
+                pixelRatio: 1,
+                width,
+                height,
+                backgroundColor: 'transparent'
+            });
      
-     if (video) video.style.display = videoStyle;
-     ctx.drawImage(overlayCanvas, 0, 0, width, height);
-     return canvas.toDataURL('image/jpeg', 0.8);
-  } catch (err) {
-       return null;
-  }
+         if (video) video.style.display = videoStyle;
+         ctx.drawImage(overlayCanvas, 0, 0, width, height);
+         return canvas.toDataURL('image/jpeg', 0.8);
+    } catch (err) {
+             return null;
+    }
 };
 
 let ffmpeg: any = null;

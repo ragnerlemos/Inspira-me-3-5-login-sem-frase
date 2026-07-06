@@ -1,10 +1,15 @@
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 
-export const APP_STORAGE_FOLDER = 'InspiraMe3.0';
+export const APP_STORAGE_FOLDER = 'Downloads/InspireMe';
 
 export type SaveAppFileResult = {
   uri: string;
+};
+
+const normalizeFolderSegment = (value?: string): string => {
+  const sanitized = value?.trim().replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_');
+  return sanitized || 'Geral';
 };
 
 export const ensureAppStoragePermission = async (): Promise<boolean> => {
@@ -17,9 +22,18 @@ export const ensureAppStoragePermission = async (): Promise<boolean> => {
   }
 };
 
-export const saveFileToAppFolder = async (base64Data: string, filename: string): Promise<SaveAppFileResult> => {
-  const directory = Directory.Documents;
-  const folderPath = `${APP_STORAGE_FOLDER}`;
+export const saveFileToAppFolder = async (
+  base64Data: string,
+  filename: string,
+  category?: string,
+  subCategory?: string,
+): Promise<SaveAppFileResult> => {
+  const directory = Directory.ExternalStorage;
+  const folderPath = [
+    APP_STORAGE_FOLDER,
+    normalizeFolderSegment(category),
+    normalizeFolderSegment(subCategory),
+  ].join('/');
 
   try {
     await Filesystem.mkdir({
@@ -29,7 +43,7 @@ export const saveFileToAppFolder = async (base64Data: string, filename: string):
     });
   } catch (error) {
     // Ignore if the folder already exists or if the plugin created it automatically.
-    console.warn('Não foi possível criar a pasta do app (pode já existir):', error);
+    console.warn('Não foi possível criar a pasta de download (pode já existir):', error);
   }
 
   const result = await Filesystem.writeFile({
