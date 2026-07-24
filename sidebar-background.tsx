@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useMemo, useState, useEffect } from "react";
+import { useRef, useMemo } from "react";
 import Link from 'next/link';
-import { Upload, Image as ImageIcon, Palette, Layers, Pipette, FlipHorizontal, RotateCcw, ArrowLeftRight } from "lucide-react";
+import { Upload, Image as ImageIcon, Palette, Layers, Pipette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { toggleTextColor } from "../utils/color-utils";
-import type { EstiloFundo, EditorState, VignetteState } from "../tipos";
-import { Switch } from "@/components/ui/switch";
-import { useEditor } from "../contexts/editor-context";
+import type { EstiloFundo } from "../tipos";
 
 const PREDEFINED_COLORS = [
   "#FFFFFF", // Branco
@@ -31,54 +28,23 @@ const PREDEFINED_COLORS = [
   "#F5E8C7"  // Bege Pastel
 ];
 
-type TipoFundoAtivo = 'media' | 'solid' | 'gradient' | 'vignette';
+type TipoFundoAtivo = 'media' | 'solid' | 'gradient';
 
 export function ControleTipoFundo({ 
     backgroundStyle, 
     setBackgroundStyle, 
     fgColor, 
-    setFgColor,
-    vignette,
-    setVignette,
-    updateState
+    setFgColor 
 }: { 
     backgroundStyle: EstiloFundo; 
-    setBackgroundStyle?: (style: EstiloFundo) => void; 
+    setBackgroundStyle: (style: EstiloFundo) => void; 
     fgColor?: string; 
-    setFgColor?: (color: string) => void;
-    vignette?: VignetteState;
-    setVignette?: (val: VignetteState) => void;
-    updateState?: (newState: Partial<EditorState>) => void;
+    setFgColor?: (color: string) => void; 
 }) {
-    const { currentState, updateState: updateEditorState } = useEditor();
-    const actualVignette = vignette || currentState.vignette || {
-        enabled: true,
-        type: "bottom",
-        color: "#000000",
-        opacity: 0.4,
-        intensity: 0.6,
-        feather: 0.8
-    };
-
-    const handleVignetteChange = (changes: Partial<VignetteState>) => {
-        const newVignette = { ...actualVignette, ...changes };
-        if (setVignette) setVignette(newVignette);
-        else if (updateState) updateState({ vignette: newVignette });
-        else updateEditorState({ vignette: newVignette });
-    };
-
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
     
-    const [activeTab, setActiveTab] = useState<TipoFundoAtivo>(backgroundStyle.type as TipoFundoAtivo);
-
-    useEffect(() => {
-        if (backgroundStyle.type !== activeTab && activeTab !== 'vignette') {
-             setActiveTab(backgroundStyle.type as TipoFundoAtivo);
-        }
-    }, [backgroundStyle.type, activeTab]);
-
-    const { gradient } = useMemo(() => {
+    const { activeTab, gradient } = useMemo(() => {
         const type = backgroundStyle.type;
         let grad = { type: 'linear' as 'linear'|'radial', colors: ['#A06CD5', '#45B8AC'] as [string, string], direction: 'to right' };
         if (type === 'gradient' && backgroundStyle.value) {
@@ -107,18 +73,17 @@ export function ControleTipoFundo({
 
             } catch {}
         }
-        return { gradient: grad };
+        return { activeTab: type, gradient: grad };
     }, [backgroundStyle]);
 
     const handleTabChange = (tab: TipoFundoAtivo) => {
-        setActiveTab(tab);
         if (tab === 'solid') {
-            if (setBackgroundStyle) setBackgroundStyle({ type: 'solid', value: '#333333' });
+            setBackgroundStyle({ type: 'solid', value: '#333333' });
         } else if (tab === 'gradient') {
             const gradValue = `${gradient.type}-gradient(${gradient.type === 'linear' ? `${gradient.direction}, ` : `circle at center, `}${gradient.colors[0]}, ${gradient.colors[1]})`;
-            if (setBackgroundStyle) setBackgroundStyle({ type: 'gradient', value: gradValue });
-        } else if (tab === 'media') {
-             if (setBackgroundStyle) setBackgroundStyle({ type: 'media', value: '' });
+            setBackgroundStyle({ type: 'gradient', value: gradValue });
+        } else { // media
+             setBackgroundStyle({ type: 'media', value: '' });
         }
     };
     
@@ -161,57 +126,38 @@ export function ControleTipoFundo({
         handleGradientChange({ ...gradient, direction });
     };
 
+    const normalizeHex = (hex: string) => {
+        const cleaned = hex.replace('#', '');
+        return cleaned.length === 3
+            ? cleaned.split('').map((char) => char + char).join('')
+            : cleaned;
+    };
+
+    const invertHexColor = (color: string) => {
+        const normalized = normalizeHex(color);
+        const r = parseInt(normalized.substring(0, 2), 16);
+        const g = parseInt(normalized.substring(2, 4), 16);
+        const b = parseInt(normalized.substring(4, 6), 16);
+        const invertedR = (255 - r).toString(16).padStart(2, '0');
+        const invertedG = (255 - g).toString(16).padStart(2, '0');
+        const invertedB = (255 - b).toString(16).padStart(2, '0');
+        return `#${invertedR}${invertedG}${invertedB}`;
+    };
+
     const handleInvertColors = () => {
-        if (!fgColor) return;
+        if (!fgColor || !setFgColor) return;
 
-        const invertedText = toggleTextColor(fgColor, backgroundStyle);
-
-        if (updateState) {
-            updateState({ textColor: invertedText });
-        } else {
-            if (setFgColor) setFgColor(invertedText);
+        if (backgroundStyle.type === 'solid') {
+            const currentBg = backgroundStyle.value as string;
+            setBackgroundStyle({ type: 'solid', value: fgColor });
+            setFgColor(currentBg);
+            toast({ title: 'Cores invertidas!' });
+            return;
         }
-        
+
+        const inverted = invertHexColor(fgColor);
+        setFgColor(inverted);
         toast({ title: 'Cor do texto invertida!' });
-    };
-
-    const handleResetGradient = () => {
-        handleGradientChange({ ...gradient, colors: ['#A06CD5', '#45B8AC'] });
-        toast({ title: 'Gradiente resetado!' });
-    };
-
-    const handleSwapGradientColors = () => {
-        handleGradientChange({ ...gradient, colors: [gradient.colors[1], gradient.colors[0]] as [string, string] });
-        toast({ title: 'Cores do gradiente alternadas!' });
-    };
-
-    const handleResetColors = () => {
-        if (updateState) {
-            updateState({
-                textColor: '#000000',
-                backgroundStyle: { type: 'solid', value: '#FFFFFF' }
-            });
-        } else {
-            if (setFgColor) setFgColor('#000000');
-            if (setBackgroundStyle) setBackgroundStyle({ type: 'solid', value: '#FFFFFF' });
-        }
-        toast({ title: 'Cores resetadas!' });
-    };
-
-    const handleSwapColors = () => {
-        if (!fgColor) return;
-        const currentBg = backgroundStyle.type === 'solid' ? backgroundStyle.value : '#000000';
-        
-        if (updateState) {
-            updateState({
-                textColor: currentBg,
-                backgroundStyle: { ...backgroundStyle, type: 'solid', value: fgColor }
-            });
-        } else {
-            if (setFgColor) setFgColor(currentBg);
-            if (setBackgroundStyle) setBackgroundStyle({ ...backgroundStyle, type: 'solid', value: fgColor });
-        }
-        toast({ title: 'Cores alternadas!' });
     };
 
     const handleGradientTypeChange = (type: 'linear' | 'radial') => {
@@ -220,11 +166,10 @@ export function ControleTipoFundo({
 
     return (
         <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
                 <Button variant={activeTab === 'media' ? "secondary" : "ghost"} onClick={() => handleTabChange('media')}><ImageIcon className="mr-2 h-4 w-4" /> Mídia</Button>
                 <Button variant={activeTab === 'solid' ? "secondary" : "ghost"} onClick={() => handleTabChange('solid')}><Palette className="mr-2 h-4 w-4" /> Cor</Button>
                 <Button variant={activeTab === 'gradient' ? "secondary" : "ghost"} onClick={() => handleTabChange('gradient')}><Layers className="mr-2 h-4 w-4" /> Gradiente</Button>
-                <Button variant={activeTab === 'vignette' ? "secondary" : "ghost"} onClick={() => handleTabChange('vignette')}><div className="w-4 h-4 mr-2 rounded-sm bg-gradient-to-t from-black/60 to-transparent border border-current/50" /> Vinheta</Button>
             </div>
             
             <Separator />
@@ -290,22 +235,10 @@ export function ControleTipoFundo({
                         </div>
                     </div>
                     {fgColor && setFgColor && (
-                        <div className="space-y-2 pt-2">
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button variant="outline" size="sm" className="flex items-center justify-center gap-1.5" onClick={handleResetColors}>
-                                    <RotateCcw className="h-3.5 w-3.5" />
-                                    Resetar
-                                </Button>
-                                <Button variant="outline" size="sm" className="flex items-center justify-center gap-1.5" onClick={handleSwapColors}>
-                                    <ArrowLeftRight className="h-3.5 w-3.5" />
-                                    Alternar
-                                </Button>
-                            </div>
-                            <Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-1.5" onClick={handleInvertColors} title="Inverter Cor do Texto">
-                                <FlipHorizontal className="h-3.5 w-3.5" />
-                                Inverter Cor do Texto
-                            </Button>
-                        </div>
+                        <Button variant="outline" className="w-full flex items-center gap-2" onClick={handleInvertColors}>
+                            <FlipHorizontal className="h-4 w-4" />
+                            Inverter Cores
+                        </Button>
                     )}
                 </div>
             )}
@@ -370,105 +303,12 @@ export function ControleTipoFundo({
                                 />
                             ))}
                         </div>
-                        <div className="space-y-2 pt-2">
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button variant="outline" size="sm" className="flex items-center justify-center gap-1.5" onClick={handleResetGradient}>
-                                    <RotateCcw className="h-3.5 w-3.5" />
-                                    Resetar
-                                </Button>
-                                <Button variant="outline" size="sm" className="flex items-center justify-center gap-1.5" onClick={handleSwapGradientColors}>
-                                    <ArrowLeftRight className="h-3.5 w-3.5" />
-                                    Alternar
-                                </Button>
-                            </div>
-                            <Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-1.5" onClick={handleInvertColors} title="Inverter Cor do Texto">
-                                <FlipHorizontal className="h-3.5 w-3.5" />
-                                Inverter Cor do Texto
-                            </Button>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" className="flex-1" onClick={() => handleGradientColorChange(0, '#A06CD5')}>Resetar</Button>
+                            <Button variant="outline" size="sm" className="flex-1" onClick={() => handleGradientChange({ ...gradient, colors: [gradient.colors[1], gradient.colors[0]] as [string, string] })}>Alternar cores</Button>
                         </div>
+                        <Button variant="outline" size="sm" className="w-full" onClick={handleInvertColors}>Inverter cores</Button>
                     </div>
-                </div>
-            )}
-
-            {activeTab === 'vignette' && (
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="vignette-enabled" className="text-left font-bold">Ativar Vinheta</Label>
-                        <Switch 
-                            id="vignette-enabled" 
-                            checked={actualVignette.enabled} 
-                            onCheckedChange={(c) => handleVignetteChange({ enabled: c })} 
-                        />
-                    </div>
-                    
-                    {actualVignette.enabled && (
-                        <>
-                            <div className="space-y-2">
-                                <Label className="text-left block">Tipo de Vinheta</Label>
-                                <Select value={actualVignette.type} onValueChange={(t: any) => handleVignetteChange({ type: t })}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione o tipo" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="bottom">De baixo para cima</SelectItem>
-                                        <SelectItem value="top">De cima para baixo</SelectItem>
-                                        <SelectItem value="left">Da esquerda para direita</SelectItem>
-                                        <SelectItem value="right">Da direita para esquerda</SelectItem>
-                                        <SelectItem value="corners">Quatro cantos</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label className="text-left block">Cor da Vinheta</Label>
-                                <div className="relative h-10 w-full rounded-md border overflow-hidden">
-                                    <Input 
-                                        type="color" 
-                                        value={actualVignette.color} 
-                                        onChange={e => handleVignetteChange({ color: e.target.value })} 
-                                        className="absolute inset-0 w-full h-full p-0 border-none cursor-pointer opacity-0"
-                                    />
-                                    <div className="w-full h-full" style={{ backgroundColor: actualVignette.color }} />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2 pt-2">
-                                <div className="flex justify-between items-center">
-                                    <Label className="text-left block">Opacidade</Label>
-                                    <span className="text-xs text-muted-foreground">{Math.round(actualVignette.opacity * 100)}%</span>
-                                </div>
-                                <Slider 
-                                    value={[actualVignette.opacity * 100]} 
-                                    min={0} max={100} step={1}
-                                    onValueChange={v => handleVignetteChange({ opacity: v[0] / 100 })} 
-                                />
-                            </div>
-
-                            <div className="space-y-2 pt-2">
-                                <div className="flex justify-between items-center">
-                                    <Label className="text-left block">Intensidade</Label>
-                                    <span className="text-xs text-muted-foreground">{Math.round(actualVignette.intensity * 100)}%</span>
-                                </div>
-                                <Slider 
-                                    value={[actualVignette.intensity * 100]} 
-                                    min={0} max={100} step={1}
-                                    onValueChange={v => handleVignetteChange({ intensity: v[0] / 100 })} 
-                                />
-                            </div>
-
-                            <div className="space-y-2 pt-2">
-                                <div className="flex justify-between items-center">
-                                    <Label className="text-left block">Suavidade</Label>
-                                    <span className="text-xs text-muted-foreground">{Math.round(actualVignette.feather * 100)}%</span>
-                                </div>
-                                <Slider 
-                                    value={[actualVignette.feather * 100]} 
-                                    min={0} max={100} step={1}
-                                    onValueChange={v => handleVignetteChange({ feather: v[0] / 100 })} 
-                                />
-                            </div>
-                        </>
-                    )}
                 </div>
             )}
         </div>

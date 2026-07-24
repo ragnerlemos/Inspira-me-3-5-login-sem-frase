@@ -151,7 +151,7 @@ export function MemeGenerator({
             URL.revokeObjectURL(memeUrl);
         }
     }
-  }, [shareDirectly, quote, toast, onClose]);
+  }, [shareDirectly, quote, toast, onClose, memeUrl]);
 
   const handleShareImageClick = async () => {
     if (!memeFile) return;

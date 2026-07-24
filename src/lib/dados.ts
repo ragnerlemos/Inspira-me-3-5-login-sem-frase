@@ -84,7 +84,7 @@ const mapRowToQuote = (row: any[], index: number, sheetName: string, isNewStruct
     let time: string | undefined;
 
     if (isNewStructure) {
-        id = row[0]?.toString() || `${sheetName}-${index}`;
+        id = row[0]?.toString() ? `${sheetName}-${index}-${row[0].toString()}` : `${sheetName}-${index}`;
         date = row[1]?.toString();
         time = row[2]?.toString();
         subCategory = normalizeCellValue(row[3]);

@@ -9,6 +9,7 @@ import {
   Feather,
   LayoutTemplate,
   Library,
+  Layers,
   Menu,
   Settings,
   Star,
@@ -44,6 +45,7 @@ function MainNavigationLinks({ onLinkClick }: { onLinkClick?: () => void }) {
     <>
       <NavLink href="/frases" icon={FileText} label="Frases" onClick={onLinkClick} />
       <NavLink href="/editor-de-video" icon={Edit} label="Editor" onClick={onLinkClick} />
+      <NavLink href="/editor-de-video?batch=true" icon={Layers} label="Lote" onClick={onLinkClick} />
       <NavLink href="/favoritos" icon={Star} label="Favoritos" onClick={onLinkClick} />
       <NavLink href="/projetos" icon={Clapperboard} label="Projetos" onClick={onLinkClick} />
       <NavLink href="/modelos" icon={LayoutTemplate} label="Modelos" onClick={onLinkClick} />
@@ -140,7 +142,7 @@ export function AppHeader() {
         </Link>
 
         {/* Seção Central: Navegação Principal */}
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-0">
           <MainNavigationLinks />
         </nav>
 

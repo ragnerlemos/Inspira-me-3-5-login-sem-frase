@@ -10,6 +10,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import type { EditorState, EstiloFundo } from "../tipos";
 import { useRouter } from "next/navigation";
 import { useEditor } from "../contexts/editor-context";
+import { toggleTextColor } from "../utils/color-utils";
 import { ControleModelos } from "./sidebar-modelos";
 import { ControleTipoFundo } from "./sidebar-background";
 import { SidebarEstiloTexto, type CommonStyleProps } from "./sidebar-estilo-texto";
@@ -97,29 +98,9 @@ export function Sidebar({
     }
     
     const handleInvertColors = () => {
-        if (backgroundStyle.type === 'solid') {
-            // Fundo sólido: troca cor do fundo com cor do texto
-            const newBgColor = fgColor;
-            const newFgColor = backgroundStyle.value;
-            
-            updateState({
-                backgroundStyle: { type: 'solid', value: newBgColor },
-                textColor: newFgColor,
-            });
-        } else {
-            // Fundo com mídia ou gradiente: inverte a cor do texto (claro↔escuro)
-            const hex = fgColor.replace('#', '');
-            const r = parseInt(hex.substring(0, 2), 16);
-            const g = parseInt(hex.substring(2, 4), 16);
-            const b = parseInt(hex.substring(4, 6), 16);
-            const invertedR = (255 - r).toString(16).padStart(2, '0');
-            const invertedG = (255 - g).toString(16).padStart(2, '0');
-            const invertedB = (255 - b).toString(16).padStart(2, '0');
-            const invertedColor = `#${invertedR}${invertedG}${invertedB}`;
-            
-            updateState({ textColor: invertedColor });
-            toast({ title: 'Cor do texto invertida!' });
-        }
+        const newTextColor = toggleTextColor(fgColor, backgroundStyle);
+        updateState({ textColor: newTextColor });
+        toast({ title: 'Cor do texto invertida!' });
     };
     
     const renderActiveControl = () => {
@@ -177,7 +158,7 @@ export function Sidebar({
                      </div>
                  );
             case 'fundo':
-                return <div className="p-4"><ControleTipoFundo backgroundStyle={backgroundStyle} setBackgroundStyle={setBackgroundStyle} fgColor={fgColor} setFgColor={setFgColor} /></div>;
+                return <div className="p-4"><ControleTipoFundo backgroundStyle={backgroundStyle} setBackgroundStyle={setBackgroundStyle} fgColor={fgColor} setFgColor={setFgColor} updateState={updateState} /></div>;
             case 'modelos':
                 return <div className="p-4"><ControleModelos /></div>;
             case 'assinatura':

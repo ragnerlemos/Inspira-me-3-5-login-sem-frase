@@ -4,6 +4,7 @@ import { useState, useEffect, type ReactNode } from "react";
 
 interface ClientOnlyProps {
   children: ReactNode;
+  fallback?: ReactNode;
 }
 
 /**
@@ -11,7 +12,7 @@ interface ClientOnlyProps {
  * Isso é útil para evitar erros de hidratação (hydration mismatch) com bibliotecas
  * que geram IDs únicos ou dependem de APIs do navegador durante a renderização inicial.
  */
-export function ClientOnly({ children }: ClientOnlyProps) {
+export function ClientOnly({ children, fallback = null }: ClientOnlyProps) {
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
@@ -19,7 +20,7 @@ export function ClientOnly({ children }: ClientOnlyProps) {
   }, []);
 
   if (!hasMounted) {
-    return null;
+    return <>{fallback}</>;
   }
 
   return <>{children}</>;

@@ -21,6 +21,10 @@ import { captureThumbnail } from '../exportar';
 import { useToast } from "@/hooks/use-toast";
 import { generateFilename } from '@/lib/utils';
 import { ExportModal, ExportOptions } from "./export-modal";
+import { BatchWizardModal } from "./batch-wizard-modal";
+import { BatchExportModal } from "./batch-export-modal";
+import { BatchEngine } from "../batch/BatchEngine";
+import { useSearchParams } from "next/navigation";
 
 const getEditorExportMetadata = () => {
     if (typeof window === 'undefined') {
@@ -34,6 +38,7 @@ const getEditorExportMetadata = () => {
 };
 
 export function EditorActions() {
+    const searchParams = useSearchParams();
     const { 
         canUndo, undo, 
         canRedo, redo, 
@@ -45,6 +50,8 @@ export function EditorActions() {
         baseTextStyle,
         textEffectsStyle,
         dropShadowStyle,
+        batchPages,
+        setBatchState,
     } = useEditor();
     const { profile } = useProfile();
     const { addProject } = useProjects();
@@ -52,10 +59,27 @@ export function EditorActions() {
     const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
     const [videoPreview, setVideoPreview] = useState<{ url: string; blob: Blob } | null>(null);
     
+    const [isBatchWizardOpen, setIsBatchWizardOpen] = useState(false);
+    const [isBatchExportOpen, setIsBatchExportOpen] = useState(false);
+
     // Estados do novo Modal de Exportação
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportProgress, setExportProgress] = useState(0);
     const [videoDuration, setVideoDuration] = useState(5);
+
+    const handleCreateBatch = (quotes: string[], category: string, subCategory: string) => {
+        if (!currentState) return;
+        const pages = quotes.map(quote => ({
+            ...currentState,
+            text: quote
+        }));
+        setBatchState({ 
+            batchPages: pages,
+            batchCategory: category,
+            batchSubCategory: subCategory
+        });
+        setIsBatchWizardOpen(false);
+    };
 
     useEffect(() => {
       return () => {
@@ -64,6 +88,15 @@ export function EditorActions() {
         }
       };
     }, [videoPreview]);
+
+    useEffect(() => {
+        if (searchParams.get('batch') === 'true') {
+            setIsBatchWizardOpen(prev => {
+                if (prev) return prev;
+                return true;
+            });
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -232,6 +265,10 @@ export function EditorActions() {
                 <Save className="h-5 w-5 mr-2" />
                 Salvar
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsBatchWizardOpen(true)}>
+                <FilePlus className="h-4 w-4 mr-2" />
+                Projeto em Lote
+            </Button>
         </div>
 
         <DropdownMenu>
@@ -245,6 +282,10 @@ export function EditorActions() {
                     <Save className="mr-2 h-4 w-4" />
                     <span>Salvar Projeto</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsBatchWizardOpen(true)} className="md:hidden">
+                    <FilePlus className="mr-2 h-4 w-4" />
+                    <span>Projeto em Lote</span>
+                </DropdownMenuItem>
                  <DropdownMenuItem onClick={() => toast({ title: "Em breve!", description: "A função 'Salvar Como' será adicionada."})}>
                     <FilePlus className="mr-2 h-4 w-4" />
                     <span>Salvar Como...</span>
@@ -255,20 +296,40 @@ export function EditorActions() {
                     <span>Salvar como Modelo</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onExportJPG}>
-                    <Download className="mr-2 h-4 w-4" />
-                    <span>Exportar como JPG</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onExportPNG}>
-                    <Download className="mr-2 h-4 w-4" />
-                    <span>Exportar como PNG</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleOpenExportModal}>
-                    <Share2 className="mr-2 h-4 w-4" />
-                    <span>Exportar como Vídeo</span>
-                </DropdownMenuItem>
+                {batchPages && batchPages.length > 1 ? (
+                    <DropdownMenuItem onClick={() => setIsBatchExportOpen(true)} className="font-medium text-primary">
+                        <Download className="mr-2 h-4 w-4" />
+                        <span>Exportar Lote ({batchPages.length} pág.)</span>
+                    </DropdownMenuItem>
+                ) : (
+                    <>
+                        <DropdownMenuItem onClick={onExportJPG}>
+                            <Download className="mr-2 h-4 w-4" />
+                            <span>Exportar como JPG</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={onExportPNG}>
+                            <Download className="mr-2 h-4 w-4" />
+                            <span>Exportar como PNG</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleOpenExportModal}>
+                            <Share2 className="mr-2 h-4 w-4" />
+                            <span>Exportar como Vídeo</span>
+                        </DropdownMenuItem>
+                    </>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
+
+        <BatchWizardModal 
+            open={isBatchWizardOpen} 
+            onOpenChange={setIsBatchWizardOpen} 
+            onCreateBatch={handleCreateBatch} 
+        />
+        
+        <BatchExportModal 
+            open={isBatchExportOpen} 
+            onOpenChange={setIsBatchExportOpen} 
+        />
 
         {videoPreview && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">

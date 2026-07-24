@@ -5,7 +5,7 @@ import { getSheetData, getAllQuotes } from '@/lib/dados';
 import { FrasesClientPage } from './frases-client';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export const dynamic = 'force-dynamic';
+
 
 // O componente de esqueleto para ser usado como fallback do Suspense.
 function FrasesLoadingSkeleton() {

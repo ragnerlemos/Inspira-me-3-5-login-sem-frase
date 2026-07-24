@@ -285,7 +285,7 @@ export function FrasesClientPage({
 
     return items;
 
-  }, [allQuotes, searchTerm, selectedMainCategory, selectedSubCategory, sortBy, randomSeed, favorites, hiddenQuotes, isAdmin]);
+  }, [allQuotes, searchTerm, selectedMainCategory, selectedSubCategory, sortBy, randomSeed, hiddenQuotes, isAdmin]);
 
   
   const handleShareMeme = (quote: QuoteWithAuthor) => {

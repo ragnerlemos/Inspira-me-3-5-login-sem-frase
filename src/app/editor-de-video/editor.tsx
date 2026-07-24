@@ -40,6 +40,14 @@ const getInitialState = (): Omit<EditorState, 'text'> => ({
     backgroundStyle: { type: 'solid', value: '#000000' },
     filmColor: "#000000",
     filmOpacity: 0,
+    vignette: {
+        enabled: true,
+        type: "bottom",
+        color: "#000000",
+        opacity: 0.4,
+        intensity: 0.6,
+        feather: 0.8
+    },
     aspectRatio: "9 / 16",
     showProfileSignature: false,
     signaturePositionX: 50,
@@ -60,6 +68,7 @@ const getInitialState = (): Omit<EditorState, 'text'> => ({
 });
 
 
+import { PageGallery } from "./components/page-gallery";
 export default function Editor() {
   const { width } = useWindowSize();
   const isDesktop = width >= 768;
@@ -77,6 +86,15 @@ export default function Editor() {
     baseTextStyle,
     textEffectsStyle,
     dropShadowStyle,
+    batchPages,
+    currentPageIndex,
+    selectedPageIndices,
+    changesApplyScope,
+    switchPage,
+    duplicatePage,
+    deletePage,
+    reorderPages,
+    setBatchState,
   } = useEditor();
 
   const [activeControl, setActiveControl] = useState<string | null>('texto');
@@ -134,7 +152,7 @@ export default function Editor() {
     }
 
     initialize();
-  }, [searchParams, isProfileLoaded, areTemplatesLoaded, isReady, setInitialState, allTemplates]);
+  }, [searchParams, isProfileLoaded, areTemplatesLoaded, isReady, setInitialState, allTemplates, projects, projectsLoaded]);
 
 
   const aspectRatio = currentState?.aspectRatio;
@@ -217,6 +235,7 @@ export default function Editor() {
     containerRef: previewContainerRef,
     updateState,
     onTextChange: (text: string) => updateState({ text }),
+    isBatchMode: batchPages && batchPages.length > 1,
   };
 
   return (
@@ -227,8 +246,34 @@ export default function Editor() {
         </Panel>
         {isDesktop && <PanelResizeHandle />}
         <Panel>
-            <main className="flex-1 w-full h-full overflow-auto">
-                <PreviewCanva {...previewProps} />
+            <main className="flex-1 w-full h-full flex flex-col overflow-hidden">
+                {batchPages && batchPages.length > 1 ? (
+                  <PanelGroup direction="vertical" className="flex-1 min-h-0">
+                    <Panel id="canvas-panel" order={1} className="flex flex-col min-h-0">
+                       <div className="flex-1 w-full h-full overflow-hidden relative flex items-center justify-center bg-background/5">
+                          <PreviewCanva {...previewProps} />
+                       </div>
+                    </Panel>
+                    <PanelResizeHandle className="h-1.5 bg-border/40 hover:bg-primary/50 cursor-row-resize transition-colors relative z-50 flex items-center justify-center before:content-[''] before:w-12 before:h-1 before:bg-muted-foreground/30 before:rounded-full" />
+                    <Panel id="gallery-panel" order={2} defaultSize={35} minSize={20} maxSize={65} className="flex flex-col min-h-0">
+                      <PageGallery
+                        pages={batchPages}
+                        currentIndex={currentPageIndex}
+                        selectedIndices={selectedPageIndices}
+                        changesApplyScope={changesApplyScope}
+                        onSelect={switchPage}
+                        onDuplicate={duplicatePage}
+                        onDelete={deletePage}
+                        onReorder={reorderPages}
+                        onScopeChange={(scope) => setBatchState({ changesApplyScope: scope })}
+                      />
+                    </Panel>
+                  </PanelGroup>
+                ) : (
+                  <div className="flex-1 overflow-auto">
+                     <PreviewCanva {...previewProps} />
+                  </div>
+                )}
             </main>
         </Panel>
       </PanelGroup>

@@ -13,7 +13,7 @@ import { Download, User, AtSign, Image as ImageIcon, Loader2, Twitter } from 'lu
 import { AssinaturaPerfil } from '../editor-de-video/modelos/assinatura-perfil';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export const dynamic = 'force-dynamic';
+
 
 // Componente de pré-visualização da assinatura
 function AssinaturaPreview({ profile, showPhoto, showUsername, showSocial }: {

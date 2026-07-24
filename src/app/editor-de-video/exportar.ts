@@ -1,6 +1,6 @@
 'use client';
 
-// import { toCanvas } from 'html-to-image';
+import { toCanvas } from 'html-to-image';
 import type { EditorState, EstiloTexto } from './tipos';
 import type { ProfileData } from '@/hooks/use-profile';
 import type { ExportOptions } from './components/export-modal';
@@ -129,7 +129,6 @@ export const captureAndDownload = async (format: 'jpeg' | 'png', toast: ToastFn,
         offscreenRoot.appendChild(clone);
         document.body.appendChild(offscreenRoot);
 
-        const { toCanvas } = await import('html-to-image');
         const overlayCanvas = await toCanvas(clone, {
             pixelRatio: 2,
             width,
@@ -215,7 +214,6 @@ export const captureThumbnail = async (
          const videoStyle = video?.style.getPropertyValue('display') || '';
          if (video) video.style.display = 'none';
      
-         const { toCanvas } = await import('html-to-image');
          const overlayCanvas = await toCanvas(previewElement, {
                 pixelRatio: 1,
                 width,
@@ -351,7 +349,6 @@ export const generateVideoBlob = async (
   let overlayCanvas: HTMLCanvasElement;
   try {
     // IMPORTANTE: Aqui usamos pixelRatio e as dimensões lógicas para o alinhamento ficar perfeito
-    const { toCanvas } = await import('html-to-image');
     overlayCanvas = await toCanvas(previewElement, {
         pixelRatio: scale,
         width: logicalWidth,

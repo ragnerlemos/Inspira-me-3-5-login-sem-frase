@@ -72,14 +72,10 @@ export const useFirebase = (): FirebaseServices | any => {
   }
 
   if (!context.areServicesAvailable || !context.firebaseApp || !context.firestore || !context.auth) {
-    // If we are on the client, we should probably throw
-    if (typeof window !== 'undefined') {
-        throw new Error('Firebase core services not available. Check FirebaseProvider props.');
-    }
     return {
-       firebaseApp: {} as FirebaseApp,
-       firestore: {} as Firestore,
-       auth: {} as Auth
+       firebaseApp: null as any,
+       firestore: null as any,
+       auth: null as any
     };
   }
 

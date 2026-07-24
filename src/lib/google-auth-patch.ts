@@ -1,12 +1,12 @@
-import { DefaultTransporter } from 'google-auth-library';
+import { Gaxios } from 'gaxios';
 
 let isPatched = false;
 
 export function patchGoogleAuth() {
   if (isPatched) return;
 
-  const originalRequest = DefaultTransporter.prototype.request;
-  DefaultTransporter.prototype.request = async function(opts: any) {
+  const originalRequest = Gaxios.prototype.request;
+  Gaxios.prototype.request = async function(opts: any) {
     try {
       const url = opts.url;
       const headers = { ...opts.headers };

@@ -9,7 +9,7 @@ import { ProjectItem } from "./components/project-item";
 import { ProjectEmpty } from "./components/project-empty";
 import { RenameProjectDialog } from "./components/rename-project-dialog";
 
-export const dynamic = 'force-dynamic';
+
 
 // Página para exibir os projetos salvos pelo usuário.
 export default function MyProjectsPage() {

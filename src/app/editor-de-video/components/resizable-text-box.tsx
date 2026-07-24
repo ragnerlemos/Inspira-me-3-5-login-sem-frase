@@ -168,7 +168,7 @@ export function ResizableTextBox({ widthPct, heightPx, fontSize, isSelected, edi
 
     // 6. Loop Infinito Super Suave (game loop engine)
     animationFrameRef.current = window.requestAnimationFrame(updateResize);
-  }, [clampWidth, clampHeight, clampFontSize, getDirectionVector, isLeftDirection, isTopDirection, onResize]);
+  }, [clampWidth, clampHeight, clampFontSize, getDirectionVector, onResize]);
 
   const handlePointerMove = useCallback((event: PointerEvent) => {
     pendingPointer.current = { x: event.clientX, y: event.clientY };

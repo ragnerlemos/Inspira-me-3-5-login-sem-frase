@@ -8,7 +8,7 @@ import { AssinaturaPerfil } from "../modelos/assinatura-perfil";
 import { ModeloPadrao } from '../modelos/modelo-padrao';
 import { ModeloTwitter } from '../modelos/modelo-twitter'; // Importa o novo modelo
 import type { EditorState, EstiloTexto } from '../tipos';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface PreviewCanvaProps {
     editorState: EditorState;
@@ -20,6 +20,7 @@ interface PreviewCanvaProps {
     containerRef: React.RefObject<HTMLDivElement>;
     updateState: (newState: Partial<EditorState>) => void;
     onTextChange: (text: string) => void;
+    isBatchMode?: boolean;
 }
 
 
@@ -56,9 +57,53 @@ export function PreviewCanva(props: PreviewCanvaProps) {
         scale,
         containerRef,
         updateState,
+        isBatchMode = false,
     } = props;
     const { activeTemplateId, aspectRatio, backgroundStyle, filmColor, filmOpacity } = editorState;
     const [isTextSelected, setIsTextSelected] = useState(false);
+    
+    // Auto-scale state for batch mode
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const [autoScale, setAutoScale] = useState(1);
+
+    useEffect(() => {
+      if (!isBatchMode) return;
+      const el = wrapperRef.current;
+      if (!el) return;
+
+      const observer = new ResizeObserver((entries) => {
+        if (!entries || entries.length === 0) return;
+        const { width, height } = entries[0].contentRect;
+        
+        let canvasW = 400;
+        let canvasH = 400;
+        const ratioStr = (aspectRatio || "9/16").replace(/\s/g, "");
+        if (ratioStr === "9/16") {
+          canvasW = 340;
+          canvasH = 604.4;
+        } else if (ratioStr === "16/9") {
+          canvasW = 400;
+          canvasH = 225;
+        } else {
+          canvasW = 400;
+          canvasH = 400;
+        }
+
+        // Add safety margins/padding (e.g. 24px)
+        const padding = 24;
+        const availableW = Math.max(0, width - padding);
+        const availableH = Math.max(0, height - padding);
+
+        const scaleX = availableW / canvasW;
+        const scaleY = availableH / canvasH;
+        const calculatedScale = Math.min(scaleX, scaleY);
+        
+        setAutoScale(Math.min(Math.max(calculatedScale, 0.05), 1.5));
+      });
+
+      observer.observe(el);
+      return () => observer.disconnect();
+    }, [aspectRatio, isBatchMode]);
   
   const filmRgb = hexToRgb(filmColor);
   const filmBackgroundColor = filmRgb ? `rgba(${filmRgb.r}, ${filmRgb.g}, ${filmRgb.b}, ${filmOpacity / 100})` : `rgba(0, 0, 0, ${filmOpacity / 100})`;
@@ -103,6 +148,47 @@ export function PreviewCanva(props: PreviewCanvaProps) {
     return <div className="absolute inset-0 bg-black" />;
   };
 
+  const renderVignette = () => {
+    const { vignette } = editorState;
+    if (!vignette || !vignette.enabled) return null;
+
+    const hexToRgba = (hex: string, alpha: number) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result
+            ? `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${alpha})`
+            : `rgba(0,0,0,${alpha})`;
+    };
+
+    const { type, color, opacity, intensity, feather } = vignette;
+
+    const colorStart = hexToRgba(color, opacity);
+    const colorEnd = hexToRgba(color, 0);
+
+    const startPct = Math.max(0, intensity * 100 - feather * 100);
+    const endPct = Math.min(100, intensity * 100 + feather * 100);
+    
+    let background = "";
+    if (type === 'corners') {
+        background = [
+            `radial-gradient(circle at top left, ${colorStart} 0%, ${colorEnd} ${endPct}%)`,
+            `radial-gradient(circle at top right, ${colorStart} 0%, ${colorEnd} ${endPct}%)`,
+            `radial-gradient(circle at bottom left, ${colorStart} 0%, ${colorEnd} ${endPct}%)`,
+            `radial-gradient(circle at bottom right, ${colorStart} 0%, ${colorEnd} ${endPct}%)`,
+        ].join(', ');
+    } else {
+        const dirMap: Record<string, string> = {
+            bottom: 'to top',
+            top: 'to bottom',
+            left: 'to right',
+            right: 'to left'
+        };
+        const direction = dirMap[type] || 'to top';
+        background = `linear-gradient(${direction}, ${colorStart} 0%, ${colorStart} ${startPct}%, ${colorEnd} ${endPct}%)`;
+    }
+
+    return <div className="absolute inset-0 pointer-events-none z-[15]" style={{ background }} />;
+  };
+
   const handleTextBoxResize = (next: { widthPct: number; heightPx: number; fontSize?: number }) => {
     const update: Partial<EditorState> = {
       textBoxWidth: next.widthPct,
@@ -141,13 +227,22 @@ export function PreviewCanva(props: PreviewCanvaProps) {
   };
 
   return (
-    <main className="w-full h-full p-4 flex items-start justify-center overflow-hidden">
+    <main 
+      ref={wrapperRef}
+      className={cn(
+        "w-full h-full p-4 flex justify-center overflow-hidden",
+        isBatchMode ? "items-center bg-black/10" : "items-start"
+      )}
+    >
       <div 
         style={{
-          transform: `scale(${scale})`,
-          transformOrigin: "top center",
+          transform: `scale(${isBatchMode ? autoScale : scale})`,
+          transformOrigin: isBatchMode ? "center center" : "top center",
         }}
-        className="transition-transform duration-300 ease-in-out"
+        className={cn(
+          "transition-transform ease-out shrink-0",
+          isBatchMode ? "duration-100" : "duration-300 ease-in-out"
+        )}
       >
         <div
           ref={containerRef}
@@ -163,6 +258,7 @@ export function PreviewCanva(props: PreviewCanvaProps) {
           )}
         >
             {renderBackground()}
+            {renderVignette()}
 
             {filmOpacity > 0 && 
                 <div className="absolute inset-0 z-10" style={{ backgroundColor: filmBackgroundColor }} />

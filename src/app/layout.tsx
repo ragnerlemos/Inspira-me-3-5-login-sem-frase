@@ -17,7 +17,7 @@ export default function RootLayout({
           content="width=device-width, initial-scale=1, viewport-fit=cover"
         />
       </head>
-      <body className="font-body antialiased h-full">
+      <body suppressHydrationWarning className="font-body antialiased h-full">
         <FirebaseClientProvider>
           <Providers>
             {children}

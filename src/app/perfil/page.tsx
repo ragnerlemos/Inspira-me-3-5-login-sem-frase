@@ -12,7 +12,7 @@ import { BrandColorsCard } from './components/brand-colors-card';
 
 import { ProfileHeader } from './components/profile-header';
 
-export const dynamic = 'force-dynamic';
+
 
 // Página de Perfil para o usuário editar suas informações.
 export default function ProfilePage() {

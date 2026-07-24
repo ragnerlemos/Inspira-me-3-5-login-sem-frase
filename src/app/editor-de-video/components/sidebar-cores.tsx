@@ -19,6 +19,17 @@ export interface SidebarCoresProps {
 export function SidebarCores({ backgroundStyle, setBackgroundStyle, fgColor, setFgColor, predefinedColors, onInvertColors }: SidebarCoresProps) {
     const bgColor = backgroundStyle.type === 'solid' ? backgroundStyle.value : '#000000';
 
+    const handleResetColors = () => {
+        setBackgroundStyle({ type: 'solid', value: '#FFFFFF' });
+        setFgColor('#000000');
+    };
+
+    const handleSwapColors = () => {
+        const currentBg = backgroundStyle.type === 'solid' ? backgroundStyle.value : '#000000';
+        setBackgroundStyle({ type: 'solid', value: fgColor });
+        setFgColor(currentBg);
+    };
+
     return (
         <div className="p-4 space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -48,6 +59,15 @@ export function SidebarCores({ backgroundStyle, setBackgroundStyle, fgColor, set
                 </div>
             </div>
 
+            <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1 flex items-center justify-center gap-2" onClick={handleResetColors}>
+                    Resetar
+                </Button>
+                <Button variant="outline" size="sm" className="flex-1 flex items-center justify-center gap-2" onClick={handleSwapColors}>
+                    Alternar
+                </Button>
+            </div>
+
             <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground block text-left">Cores de Fundo Predefinidas</Label>
                 <div className="grid grid-cols-6 gap-2">
@@ -67,9 +87,9 @@ export function SidebarCores({ backgroundStyle, setBackgroundStyle, fgColor, set
                 </div>
             </div>
 
-            <Button variant="outline" className="w-full flex items-center gap-2" onClick={onInvertColors}>
+            <Button variant="outline" className="w-full flex items-center gap-2" onClick={onInvertColors} title="Inverter Cor do Texto">
                 <FlipHorizontal className="h-4 w-4" />
-                Inverter Cores
+                Inverter Cor do Texto
             </Button>
         </div>
     );

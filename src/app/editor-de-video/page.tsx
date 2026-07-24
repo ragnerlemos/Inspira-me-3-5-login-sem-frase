@@ -31,17 +31,17 @@ function EditorHeaderActions() {
 
 export default function EditorPage() {
   return (
-    <div className="flex flex-col h-full">
-      <ClientOnly>
+    <ClientOnly fallback={<Loading />}>
+      <div className="flex flex-col h-full">
         <PageHeader title="Editor" showBack>
           <EditorHeaderActions />
         </PageHeader>
-      </ClientOnly>
-      <div className="flex-1 flex flex-col min-h-0">
-        <Suspense fallback={<Loading />}>
-          <Editor />
-        </Suspense>
+        <div className="flex-1 flex flex-col min-h-0">
+          <Suspense fallback={<Loading />}>
+            <Editor />
+          </Suspense>
+        </div>
       </div>
-    </div>
+    </ClientOnly>
   );
 }

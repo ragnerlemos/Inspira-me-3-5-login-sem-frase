@@ -18,6 +18,17 @@ export type EstiloFundo = {
     hueRotate?: number;
 };
 
+export type VignetteType = 'bottom' | 'top' | 'left' | 'right' | 'corners';
+
+export interface VignetteState {
+    enabled: boolean;
+    type: VignetteType;
+    color: string;
+    opacity: number;
+    intensity: number;
+    feather: number;
+}
+
 export interface EditorState {
     text: string;
     fontFamily: string;
@@ -41,6 +52,7 @@ export interface EditorState {
     backgroundStyle: EstiloFundo;
     filmColor: string;
     filmOpacity: number;
+    vignette?: VignetteState;
     videoMuted: boolean;
     videoVolume: number;
     aspectRatio: ProporcaoTela;
@@ -64,6 +76,12 @@ export interface EditorState {
     logoZIndex?: number;
     textZIndex?: number;
     signatureZIndex?: number;
+    // Propriedades do Projeto em Lote (opcionais para projetos de 1 página)
+    pages?: any[]; // Array de EditorPage (evitando import circular)
+    currentPageIndex?: number;
+    selectedPageIndices?: number[];
+    changesApplyScope?: "current" | "all";
+    createdBy?: "manual" | "batch";
 }
 
 export interface EditorControlState {
