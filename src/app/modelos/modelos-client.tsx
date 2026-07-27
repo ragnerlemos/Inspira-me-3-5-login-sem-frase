@@ -134,7 +134,7 @@ export default function ModelosClientPage() {
             </div>
             <div className="mb-12">
                 <h2 className="text-2xl font-headline font-bold mb-4">Modelos Padrão</h2>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {defaultTemplates.map((template) => {
                     const editorUrl = new URLSearchParams();
                     editorUrl.set('templateId', template.id.toString());
@@ -144,9 +144,9 @@ export default function ModelosClientPage() {
                     
                     return (
                         <Link key={template.id} href={`/editor-de-video?${editorUrl.toString()}`} passHref className="group">
-                            <Card className="overflow-hidden flex flex-col h-full">
+                            <Card className="overflow-hidden flex flex-col h-full hover:border-primary/50 transition-colors">
                             <div className={cn(
-                                "relative w-full flex items-center justify-center bg-muted aspect-square"
+                                "relative w-full flex items-center justify-center bg-muted aspect-[9/16] overflow-hidden rounded-t-lg"
                             )}>
                                 {template.thumbnail ? (
                                     <Image
@@ -156,16 +156,16 @@ export default function ModelosClientPage() {
                                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                                     />
                                 ) : (
-                                    <div className="flex items-center justify-center h-full transition-colors group-hover:bg-muted/80 p-4">
+                                    <div className="flex flex-col items-center justify-center h-full transition-colors group-hover:bg-muted/80 p-4 w-full">
                                         {template.id === 'template-default' && <IconeModeloPadrao className="h-16 w-16 text-muted-foreground/50" />}
                                         {template.id === 'template-twitter' && <IconeTwitter className="h-16 w-16 text-muted-foreground/50" />}
                                     </div>
                                 )}
                             </div>
-                            <CardContent className="p-2 bg-card">
-                                <p className="font-normal text-xs">{template.name}</p>
-                                <p className="text-[10px] text-muted-foreground">
-                                    Proporção: {template.editorState.aspectRatio}
+                            <CardContent className="p-3 bg-card mt-auto border-t">
+                                <p className="font-semibold text-xs truncate">{template.name}</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">
+                                    Proporção: {template.editorState.aspectRatio || '9:16'}
                                 </p>
                             </CardContent>
                             </Card>
@@ -178,7 +178,7 @@ export default function ModelosClientPage() {
             {customTemplates.length > 0 && (
                 <div>
                     <h2 className="text-2xl font-headline font-bold mb-4">Meus Modelos</h2>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {customTemplates.map((template) => {
                             const editorUrl = new URLSearchParams();
                             editorUrl.set('templateId', template.id);
@@ -186,7 +186,7 @@ export default function ModelosClientPage() {
 
                             return (
                                 <Link key={template.id} href={`/editor-de-video?${editorUrl.toString()}`} passHref className="group">
-                                    <Card className="overflow-hidden flex flex-col h-full relative">
+                                    <Card className="overflow-hidden flex flex-col h-full relative hover:border-primary/50 transition-colors">
                                         {template.isCustom && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -227,17 +227,23 @@ export default function ModelosClientPage() {
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                         )}
-                                        <div className="relative w-full aspect-square">
-                                            <Image
-                                                src={template.thumbnail!}
-                                                alt={template.name}
-                                                fill
-                                                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                            />
+                                        <div className="relative w-full aspect-[9/16] overflow-hidden rounded-t-lg bg-muted">
+                                            {template.thumbnail ? (
+                                                <Image
+                                                    src={template.thumbnail}
+                                                    alt={template.name}
+                                                    fill
+                                                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                                />
+                                            ) : (
+                                                <div className="flex items-center justify-center h-full text-muted-foreground/40">
+                                                    <IconeModeloPadrao className="h-16 w-16" />
+                                                </div>
+                                            )}
                                         </div>
-                                        <CardContent className="p-2 bg-card">
-                                            <p className="font-normal text-xs">{template.name}</p>
-                                            {template.createdAt && <p className="text-[10px] text-muted-foreground">{new Date(template.createdAt).toLocaleDateString()}</p>}
+                                        <CardContent className="p-3 bg-card mt-auto border-t">
+                                            <p className="font-semibold text-xs truncate">{template.name}</p>
+                                            {template.createdAt && <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(template.createdAt).toLocaleDateString()}</p>}
                                         </CardContent>
                                     </Card>
                                 </Link>

@@ -20,6 +20,7 @@ export interface FrasesSidebarProps {
     initialSubCategories: CategoriesHierarchy;
     onMainCategorySelect: (main: string) => void;
     onSubCategorySelect: (main: string, sub: string) => void;
+    categoryCounts?: Record<string, number>;
 }
 
 export function FrasesSidebar({
@@ -32,7 +33,8 @@ export function FrasesSidebar({
     initialMainCategories,
     initialSubCategories,
     onMainCategorySelect,
-    onSubCategorySelect
+    onSubCategorySelect,
+    categoryCounts
 }: FrasesSidebarProps) {
     const searchInput = (
         <div className="relative mb-4">
@@ -68,7 +70,7 @@ export function FrasesSidebar({
                 )}
             >
                 <LayoutGrid className="mr-2 h-4 w-4" />
-                Todos
+                Todos {categoryCounts?.['Todos'] !== undefined && `(${categoryCounts['Todos']})`}
             </Button>
             <ClientOnly>
                 <Accordion type="multiple" className="w-full">
@@ -77,6 +79,7 @@ export function FrasesSidebar({
                         .map((mainCat, index) => {
                             const subCats = (initialSubCategories[mainCat] || []);
                             const Icon = getCategoryIcon(mainCat);
+                            const mainCount = categoryCounts?.[mainCat];
 
                             if (subCats.length === 0 || (subCats.length === 1 && subCats[0] === 'Todos')) {
                                 return (
@@ -89,7 +92,7 @@ export function FrasesSidebar({
                                         )}
                                     >
                                         <Icon className="mr-2 h-4 w-4" />
-                                        {mainCat}
+                                        {mainCat} {mainCount !== undefined && `(${mainCount})`}
                                     </Button>
                                 );
                             }
@@ -104,26 +107,29 @@ export function FrasesSidebar({
                                     >
                                         <div className="flex items-center flex-1 text-left">
                                             <Icon className="mr-2 h-4 w-4" />
-                                            {mainCat}
+                                            {mainCat} {mainCount !== undefined && `(${mainCount})`}
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent className='pt-1'>
                                         <div className="flex flex-col items-start gap-1 pl-4 border-l-2 border-muted ml-3">
-                                            {subCats.map((subCat) => (
-                                                <Button
-                                                    key={subCat}
-                                                    variant="ghost"
-                                                    onClick={() => onSubCategorySelect(mainCat, subCat)}
-                                                    className={cn(
-                                                        'w-full justify-start text-sm h-8 px-3 transition-colors rounded-md hover:bg-muted/50',
-                                                        selectedMainCategory === mainCat &&
-                                                        selectedSubCategory === subCat &&
-                                                        'bg-primary/10 text-primary font-semibold'
-                                                    )}
-                                                >
-                                                    {subCat}
-                                                </Button>
-                                            ))}
+                                            {subCats.map((subCat) => {
+                                                const subCount = categoryCounts?.[`${mainCat}-${subCat}`] ?? categoryCounts?.[subCat];
+                                                return (
+                                                    <Button
+                                                        key={subCat}
+                                                        variant="ghost"
+                                                        onClick={() => onSubCategorySelect(mainCat, subCat)}
+                                                        className={cn(
+                                                            'w-full justify-start text-sm h-8 px-3 transition-colors rounded-md hover:bg-muted/50',
+                                                            selectedMainCategory === mainCat &&
+                                                            selectedSubCategory === subCat &&
+                                                            'bg-primary/10 text-primary font-semibold'
+                                                        )}
+                                                    >
+                                                        {subCat} {subCount !== undefined && `(${subCount})`}
+                                                    </Button>
+                                                );
+                                            })}
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>

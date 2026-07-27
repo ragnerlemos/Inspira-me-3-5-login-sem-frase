@@ -220,6 +220,33 @@ export function FrasesClientPage({
     }
   }, [searchParams]);
   
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const visibleQuotes = isAdmin ? allQuotes.filter(q => !hiddenQuotes.includes(q.id)) : allQuotes;
+
+    counts['Todos'] = visibleQuotes.length;
+
+    visibleQuotes.forEach((q) => {
+      if (q.sheetName) {
+        counts[q.sheetName] = (counts[q.sheetName] || 0) + 1;
+      }
+      if (q.category && q.category !== q.sheetName) {
+        counts[q.category] = (counts[q.category] || 0) + 1;
+      }
+      if (q.subCategory) {
+        counts[q.subCategory] = (counts[q.subCategory] || 0) + 1;
+        if (q.sheetName) {
+          counts[`${q.sheetName}-${q.subCategory}`] = (counts[`${q.sheetName}-${q.subCategory}`] || 0) + 1;
+        }
+        if (q.category) {
+          counts[`${q.category}-${q.subCategory}`] = (counts[`${q.category}-${q.subCategory}`] || 0) + 1;
+        }
+      }
+    });
+
+    return counts;
+  }, [allQuotes, hiddenQuotes, isAdmin]);
+
   const filteredQuotes = useMemo(() => {
     let quotes = allQuotes;
 
@@ -431,6 +458,7 @@ export function FrasesClientPage({
         initialSubCategories={initialSubCategories}
         onMainCategorySelect={handleMainCategorySelect}
         onSubCategorySelect={handleSubCategorySelect}
+        categoryCounts={categoryCounts}
       />
 
       <main className="overflow-y-auto safe-area py-8">
@@ -449,6 +477,7 @@ export function FrasesClientPage({
                   initialSubCategories={initialSubCategories}
                   onMainCategorySelect={handleMainCategorySelect}
                   onSubCategorySelect={handleSubCategorySelect}
+                  categoryCounts={categoryCounts}
                 />
               </ScrollArea>
             </div>

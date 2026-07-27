@@ -17,6 +17,7 @@ interface MobileCategorySheetProps {
     initialSubCategories: Record<string, string[]>;
     onMainCategorySelect: (cat: string) => void;
     onSubCategorySelect: (main: string, sub: string) => void;
+    categoryCounts?: Record<string, number>;
 }
 
 export function MobileCategorySheet({
@@ -31,7 +32,8 @@ export function MobileCategorySheet({
     initialMainCategories,
     initialSubCategories,
     onMainCategorySelect,
-    onSubCategorySelect
+    onSubCategorySelect,
+    categoryCounts
 }: MobileCategorySheetProps) {
     return (
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -57,6 +59,7 @@ export function MobileCategorySheet({
                             initialSubCategories={initialSubCategories}
                             onMainCategorySelect={onMainCategorySelect}
                             onSubCategorySelect={onSubCategorySelect}
+                            categoryCounts={categoryCounts}
                         />
                     </div>
                 </ScrollArea>
