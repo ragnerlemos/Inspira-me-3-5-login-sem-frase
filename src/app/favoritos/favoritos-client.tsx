@@ -11,6 +11,7 @@ import { Capacitor } from '@capacitor/core';
 import { Clipboard } from '@capacitor/clipboard';
 import { ClientOnly } from '@/components/client-only';
 import { useProfile } from '@/hooks/use-profile';
+import { useTemplates } from '@/hooks/use-templates';
 import { MemeGenerator } from '@/components/meme-generator';
 
 import { QuoteCard } from '../frases/components/quote-card';
@@ -32,7 +33,22 @@ export function FavoritesClientPage({ allQuotes }: FavoritesClientPageProps) {
   
   const [favoriteQuotes, setFavoriteQuotes] = useState<QuoteWithAuthor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [quoteForMeme, setQuoteForMeme] = useState<{ quote: QuoteWithAuthor; action: 'preview' | 'share'; } | null>(null);
+  
+  const { templates } = useTemplates();
+  const layouts = templates.filter(t => !t.isCustom);
+  const backgrounds = templates.filter(t => t.isCustom);
+  
+  const [globalLayoutId, setGlobalLayoutId] = useState<string>('');
+  const [globalBackgroundId, setGlobalBackgroundId] = useState<string>('');
+  
+  const handleSelectLayout = (quoteId: string, templateId: string) => {
+    setGlobalLayoutId(templateId);
+  };
+  const handleSelectBackground = (quoteId: string, templateId: string) => {
+    setGlobalBackgroundId(templateId);
+  };
+
+  const [quoteForMeme, setQuoteForMeme] = useState<{ quote: QuoteWithAuthor; action: 'preview' | 'share'; layoutId?: string; backgroundId?: string } | null>(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -119,17 +135,23 @@ export function FavoritesClientPage({ allQuotes }: FavoritesClientPageProps) {
     }
   };
 
-  const handleShareMeme = (quote: QuoteWithAuthor) => {
-    setQuoteForMeme({ quote, action: 'share' });
+  const handleShareMeme = (quote: QuoteWithAuthor, layoutId?: string, backgroundId?: string) => {
+    setQuoteForMeme({ quote, action: 'share', layoutId, backgroundId });
   };
 
-  const handlePreviewMeme = (quote: QuoteWithAuthor) => {
-    setQuoteForMeme({ quote, action: 'preview' });
+  const handlePreviewMeme = (quote: QuoteWithAuthor, layoutId?: string, backgroundId?: string) => {
+    setQuoteForMeme({ quote, action: 'preview', layoutId, backgroundId });
   };
   
-    const handleGoToEditor = (quote: QuoteWithAuthor) => {
+  const handleGoToEditor = (quote: QuoteWithAuthor, layoutId?: string, backgroundId?: string) => {
     const params = new URLSearchParams();
     params.set('quote', encodeURIComponent(quote.quote));
+    if (layoutId) {
+      params.set('layoutId', layoutId);
+    }
+    if (backgroundId) {
+      params.set('backgroundId', backgroundId);
+    }
     if (quote.category) {
       params.set('category', quote.category);
     }
@@ -139,7 +161,9 @@ export function FavoritesClientPage({ allQuotes }: FavoritesClientPageProps) {
     router.push(`/editor-de-video?${params.toString()}`);
   }
   
-  const memeEditorState = quoteForMeme ? getMemeEditorState(quoteForMeme.quote, profile) : null;
+  const selectedLayoutTemplate = quoteForMeme?.layoutId ? templates.find(t => t.id === quoteForMeme.layoutId) : undefined;
+  const selectedBackgroundTemplate = quoteForMeme?.backgroundId ? templates.find(t => t.id === quoteForMeme.backgroundId) : undefined;
+  const memeEditorState = quoteForMeme ? getMemeEditorState(quoteForMeme.quote, profile, selectedLayoutTemplate, selectedBackgroundTemplate) : null;
 
   const handleCardSubCategoryClick = (subCategory: string) => {
     router.push(`/frases?subCategory=${encodeURIComponent(subCategory)}&mainCategory=Todos`);
@@ -157,11 +181,18 @@ export function FavoritesClientPage({ allQuotes }: FavoritesClientPageProps) {
                           key={quote.id}
                           quote={quote}
                           isFavorited={favorites.includes(quote.id)}
+                          isAdmin={false}
+                          layouts={layouts}
+                          backgrounds={backgrounds}
+                          selectedLayoutId={globalLayoutId || layouts[0]?.id}
+                          selectedBackgroundId={globalBackgroundId}
+                          onSelectLayout={(templateId) => handleSelectLayout(quote.id, templateId)}
+                          onSelectBackground={(templateId) => handleSelectBackground(quote.id, templateId)}
                           onToggleFavorite={toggleFavorite}
                           onPreviewMeme={handlePreviewMeme}
                           onShareMeme={handleShareMeme}
                           onCopy={handleCopy}
-                          onShare={handleShare}
+                          onShareText={handleShare}
                           onGoToEditor={handleGoToEditor}
                           onSubCategoryClick={handleCardSubCategoryClick}
                       />

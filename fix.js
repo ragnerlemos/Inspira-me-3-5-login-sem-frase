@@ -1,58 +1,76 @@
 const fs = require('fs');
-const file = 'src/app/frases/frases-client.tsx';
-let content = fs.readFileSync(file, 'utf8');
-const lines = content.split(/\r?\n/);
+let code = fs.readFileSync('src/app/frases/components/frases-sidebar.tsx', 'utf8');
 
-const newLines = `              <div className="flex items-center justify-between text-sm mb-6 bg-secondary/30 p-2 pl-3 rounded-lg">
-                <div className="flex items-center">
-                  {selectedMainCategory !== 'Todos' ? (
-                    <>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="link"
-                            className="p-0 h-auto font-semibold text-muted-foreground hover:text-primary"
-                          >
-                            {selectedMainCategory}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => handleSubCategorySelect(selectedMainCategory, 'Todos')}>
-                            Todos em {selectedMainCategory}
-                          </DropdownMenuItem>
-                          {breadcrumbSubCategories.map(subCat => (
-                            <DropdownMenuItem key={subCat} onClick={() => handleSubCategorySelect(selectedMainCategory, subCat)}>
-                              {subCat}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      {selectedSubCategory !== 'Todos' && (
-                        <>
-                          <ChevronRight className="h-4 w-4 mx-1 text-muted-foreground" />
-                          <span className="font-semibold text-foreground">{selectedSubCategory}</span>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    <span className="font-semibold text-foreground">Categoria: {selectedSubCategory}</span>
-                  )}
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
-                  onClick={() => {
-                    setSelectedMainCategory('Todos');
-                    setSelectedSubCategory('Todos');
-                  }}
-                >
-                    <ChevronRight className="h-5 w-5 rotate-180" />
-                </Button>
-              </div>`.split('\n');
+// For main categories
+code = code.replace(
+`                                        <Button
+                                            variant='ghost'
+                                            onClick={() => {
+                                                onMainCategorySelect(mainCat);
+                                                if (hasSubCats) {
+                                                    setExpandedSubCats(prev => ({
+                                                        ...prev,
+                                                        [expKey]: !prev[expKey]
+                                                    }));
+                                                }
+                                            }}
+                                            className={cn(
+                                                'flex-1 justify-start text-base font-bold px-3 py-2.5 transition-colors rounded-md hover:bg-muted/50 text-left min-w-0 overflow-hidden',
+                                                isSelected && 'bg-primary/10 text-primary'
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                                                <Icon className="mr-2 h-4 w-4 shrink-0" />
+                                                <span className="capitalize truncate">{mainCat}</span>
+                                                {mainCount !== undefined && (
+                                                    <div className="text-base font-bold opacity-80 shrink-0">({mainCount})</div>
+                                                )}
+                                            </div>
+                                        </Button>
+                                        {hasSubCats && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={(e) => toggleExpanded(expKey, e)}
+                                                className="h-10 w-10 text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0 ml-1"
+                                                title={isExpanded ? "Recolher menu" : "Expandir menu"}
+                                            >
+                                                {isExpanded ? (
+                                                    <ChevronUp className="h-4 w-4 transition-transform duration-200" />
+                                                ) : (
+                                                    <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                                                )}
+                                            </Button>
+                                        )}`,
+`                                        <Button
+                                            variant='ghost'
+                                            onClick={() => {
+                                                onMainCategorySelect(mainCat);
+                                                if (hasSubCats) {
+                                                    setExpandedSubCats(prev => ({
+                                                        ...prev,
+                                                        [expKey]: !prev[expKey]
+                                                    }));
+                                                }
+                                            }}
+                                            className={cn(
+                                                'w-full flex items-center justify-between text-base font-bold px-3 py-2.5 transition-colors rounded-md hover:bg-muted/50 text-left',
+                                                isSelected && 'bg-primary/10 text-primary'
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                                                <Icon className="mr-2 h-4 w-4 shrink-0" />
+                                                <span className="capitalize truncate">{mainCat}</span>
+                                                {mainCount !== undefined && (
+                                                    <div className="text-base font-bold opacity-80 shrink-0">({mainCount})</div>
+                                                )}
+                                            </div>
+                                            {isExpanded ? (
+                                                <ChevronUp className="h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0 ml-2" />
+                                            ) : (
+                                                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0 ml-2" />
+                                            )}
+                                        </Button>`
+);
 
-const before = lines.slice(0, 1127);
-const after = lines.slice(1176);
-
-const finalLines = [...before, ...newLines, ...after];
-fs.writeFileSync(file, finalLines.join('\n'));
+fs.writeFileSync('src/app/frases/components/frases-sidebar.tsx', code);

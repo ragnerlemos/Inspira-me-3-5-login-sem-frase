@@ -105,7 +105,9 @@ export default function Editor() {
 
     const initialize = async () => {
         const quoteParam = searchParams.get("quote");
-        const templateIdParam = searchParams.get("templateId");
+        const layoutIdParam = searchParams.get("layoutId");
+        const backgroundIdParam = searchParams.get("backgroundId");
+        const templateIdParam = searchParams.get("templateId"); // fallback
         const projectIdParam = searchParams.get('projectId');
         
         let initialState: EditorState;
@@ -138,17 +140,30 @@ export default function Editor() {
             }
         }
 
-        const templateIdToLoad = templateIdParam || baseState.activeTemplateId;
-        const template = allTemplates.find(t => t.id === templateIdToLoad);
-        
-        if (template) {
-          initialState = { ...baseState, ...template.editorState, text, activeTemplateId: template.id };
-        } else {
-          // Fallback to base state if template not found
-          initialState = { ...baseState, text };
+        let mergedState = { ...baseState, text };
+        const bgIdToLoad = backgroundIdParam;
+        const layoutIdToLoad = layoutIdParam || templateIdParam;
+
+        if (bgIdToLoad) {
+            const bgTemplate = allTemplates.find(t => t.id === bgIdToLoad);
+            if (bgTemplate) {
+                mergedState = { ...mergedState, ...bgTemplate.editorState };
+            }
         }
-        
-        setInitialState(initialState);
+
+        if (layoutIdToLoad) {
+            const layoutTemplate = allTemplates.find(t => t.id === layoutIdToLoad);
+            if (layoutTemplate) {
+                mergedState = { ...mergedState, ...layoutTemplate.editorState, activeTemplateId: layoutTemplate.editorState?.activeTemplateId || layoutTemplate.id };
+            }
+        }
+
+        // Ensure text is not overwritten by empty strings in saved templates
+        if (text) {
+            mergedState.text = text;
+        }
+
+        setInitialState(mergedState);
     }
 
     initialize();

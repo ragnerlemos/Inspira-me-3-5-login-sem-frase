@@ -9,6 +9,7 @@ import { ProfileEditCard } from './components/profile-edit-card';
 import { ProfileMemeCard } from './components/profile-meme-card';
 import { ProfilePreview } from './components/profile-preview';
 import { BrandColorsCard } from './components/brand-colors-card';
+import { ProfileDescriptionCard } from './components/profile-description-card';
 
 import { ProfileHeader } from './components/profile-header';
 
@@ -83,6 +84,8 @@ export default function ProfilePage() {
                     toast({ title: "Cores Salvas", description: "Sua paleta de cores foi atualizada." });
                 }} 
             />
+
+            <ProfileDescriptionCard />
           </div>
           
           {/* Coluna de Configurações de Marca e Preview */}

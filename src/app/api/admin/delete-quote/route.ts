@@ -65,7 +65,16 @@ export async function POST(req: NextRequest) {
     let foundRowIndex = -1;
 
     for (let i = 0; i < rows.length; i++) {
-        if (rows[i][0]?.toString() === quoteId.toString()) {
+        const colA = rows[i][0]?.toString().trim();
+        const expectedId = `${actualSheetName}-${i}`;
+        const targetId = quoteId.toString().trim();
+
+        if (
+            (colA && colA === targetId) ||
+            expectedId === targetId ||
+            (colA && `${actualSheetName}-${i}-${colA}` === targetId) ||
+            (rowNumber !== undefined && Number(rowNumber) === i)
+        ) {
             foundRowIndex = i;
             break;
         }

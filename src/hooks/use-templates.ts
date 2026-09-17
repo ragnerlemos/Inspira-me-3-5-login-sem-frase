@@ -18,28 +18,28 @@ export interface Template {
 
 // Modelos padrão que não são editáveis pelo usuário
 const defaultTemplatesData: Template[] = [
-  { id: 'template-default', name: "Modelo Padrão", editorState: { fontSize: 1.0, showProfileSignature: true, showSignaturePhoto: true, signatureScale: 68, signaturePositionY: 90, aspectRatio: "9 / 16", activeTemplateId: 'template-default' }, isCustom: false, thumbnail: null },
+  { id: 'template-default', name: "Modelo Padrão", editorState: { fontSize: 1.0, showProfileSignature: true, showSignaturePhoto: true, showSignatureUsername: true, showSignatureSocial: true, signatureScale: 68, signaturePositionY: 90, aspectRatio: "9 / 16", activeTemplateId: 'template-default' }, isCustom: false, thumbnail: null },
   { id: 'template-twitter', name: "Post Twitter", editorState: { fontSize: 0.9, aspectRatio: "9 / 16", activeTemplateId: 'template-twitter', textShadowOpacity: 0 }, isCustom: false, thumbnail: null },
-  { id: 'template-mountain', name: "Paisagem na Montanha", editorState: { fontSize: 1.0, aspectRatio: "9 / 16", backgroundStyle: { type: 'media', value: 'https://picsum.photos/id/1018/1080/1920' }, activeTemplateId: 'template-mountain', showProfileSignature: true, showSignaturePhoto: true, signatureScale: 68 }, isCustom: false, thumbnail: "https://picsum.photos/id/1018/400/400" },
+  { id: 'template-mountain', name: "Paisagem na Montanha", editorState: { fontSize: 1.0, aspectRatio: "9 / 16", backgroundStyle: { type: 'media', value: 'https://picsum.photos/id/1018/1080/1920' }, activeTemplateId: 'template-mountain', showProfileSignature: true, showSignaturePhoto: true, showSignatureUsername: true, showSignatureSocial: true, signatureScale: 68 }, isCustom: false, thumbnail: "https://picsum.photos/id/1018/400/400" },
 ];
 
 
 export const useTemplates = () => {
-    const [templates, setTemplates] = useState<Template[]>(() => {
-        if (typeof window !== "undefined") {
-            try {
-                const storedTemplates = localStorage.getItem(TEMPLATES_KEY);
-                const customTemplates = storedTemplates ? JSON.parse(storedTemplates) : [];
-                return [...defaultTemplatesData, ...customTemplates];
-            } catch (error) {
-                console.error("Failed to parse templates from localStorage", error);
-            }
+    const [templates, setTemplates] = useState<Template[]>(defaultTemplatesData);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    useEffect(() => {
+        try {
+            const storedTemplates = localStorage.getItem(TEMPLATES_KEY);
+            const customTemplates = storedTemplates ? JSON.parse(storedTemplates) : [];
+            setTemplates([...defaultTemplatesData, ...customTemplates]);
+        } catch (error) {
+            console.error("Failed to parse templates from localStorage", error);
+            setTemplates(defaultTemplatesData);
+        } finally {
+            setIsLoaded(true);
         }
-        return defaultTemplatesData;
-    });
-    const [isLoaded, setIsLoaded] = useState(() => {
-        return typeof window !== "undefined";
-    });
+    }, []);
 
     const saveCustomTemplates = useCallback((customTemplates: Template[]) => {
         try {

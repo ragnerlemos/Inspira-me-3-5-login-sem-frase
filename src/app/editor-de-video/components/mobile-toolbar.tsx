@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useRef, ComponentType, useMemo } from "react";
+import React, { useState, useRef, ComponentType, useMemo, MouseEvent } from "react";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -53,6 +53,8 @@ import {
   Text,
   SmilePlus,
   FlipHorizontal,
+  Volume2,
+  Music,
 } from "lucide-react";
 import { BotaoRecurso } from "../botao-recurso";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -89,9 +91,12 @@ const PREDEFINED_COLORS = [
   "#F5E8C7"  // Bege Pastel
 ];
 
-type ActivePanel = "texto" | "canvas" | "cores" | "filtro" | "fundo" | "assinatura" | "logo" | "estilo" | "modelos" | null;
+type ActivePanel = "texto" | "canvas" | "cores" | "filtro" | "fundo" | "assinatura" | "logo" | "estilo" | "modelos" | "audio" | "musica" | "camadas" | null;
 import { ControleModelos } from "./sidebar-modelos";
 import { ControleTipoFundo } from "./sidebar-background";
+import { SidebarAudio } from "./sidebar-audio";
+import { SidebarMusica } from "./sidebar-musica";
+import { SidebarCamadas } from "./sidebar-camadas";
 
 interface CommonStyleProps {
   fontFamily: string;
@@ -402,7 +407,7 @@ function renderEstiloControl(subControl: string | null, props: EstiloControlProp
                  <div className="space-y-2">
                     <Label>Estilo</Label>
                     <div className="grid grid-cols-2 gap-2">
-                        <Button variant={props.fontWeight === 'bold' ? 'secondary' : 'ghost'} onClick={() => props.onFontWeightChange(props.fontWeight === 'bold' ? 'normal' : 'bold')}><Bold className="mr-2" />Negrito</Button>
+                        <Button variant={props.fontWeight === 'bold' || props.fontWeight === '700' ? 'secondary' : 'ghost'} onClick={() => props.onFontWeightChange(props.fontWeight === 'bold' || props.fontWeight === '700' ? 'normal' : 'bold')}><Bold className="mr-2" />Negrito</Button>
                         <Button variant={props.fontStyle === 'italic' ? 'secondary' : 'ghost'} onClick={() => props.onFontStyleChange(props.fontStyle === 'italic' ? 'normal' : 'italic')}><Italic className="mr-2" />Itálico</Button>
                     </div>
                 </div>
@@ -756,8 +761,11 @@ export function MobileToolbar({
       ),
       modelos: <div className="p-4"><ControleModelos /></div>,
       fundo: <div className="p-4"><ControleTipoFundo backgroundStyle={backgroundStyle} setBackgroundStyle={setBackgroundStyle} fgColor={fgColor} setFgColor={setFgColor} updateState={updateState} /></div>,
+      audio: <SidebarAudio />,
+      musica: <SidebarMusica />,
       assinatura: <div className="p-4"><ControleAssinatura {...props} /></div>,
       logo: <div className="p-4"><ControleLogo {...props} /></div>,
+      camadas: <SidebarCamadas />,
     };
 
     return panels[activePanel];
@@ -772,27 +780,63 @@ export function MobileToolbar({
       estilo: "Editar Estilo",
       modelos: "Modelos",
       fundo: "Editar Fundo",
+      audio: "Módulo de Áudio",
+      musica: "Módulo de Música",
       assinatura: "Editar Assinatura",
       logo: "Editar Logo",
+      camadas: "Gerenciar Camadas",
     };
     return titles[activePanel || ''] || '';
   };
 
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const isDraggingRef = React.useRef(false);
+  const startXRef = React.useRef(0);
+  const scrollLeftRef = React.useRef(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+      if (!scrollRef.current) return;
+      isDraggingRef.current = true;
+      startXRef.current = e.pageX - scrollRef.current.offsetLeft;
+      scrollLeftRef.current = scrollRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+      if (!isDraggingRef.current || !scrollRef.current) return;
+      e.preventDefault();
+      const x = e.pageX - scrollRef.current.offsetLeft;
+      const walk = (x - startXRef.current) * 1.5;
+      scrollRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handleMouseUp = () => {
+      isDraggingRef.current = false;
+  };
+
   const mainToolbar = (
-     <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex h-16 items-center justify-around w-full space-x-1 px-2 border-t bg-background">
+     <div
+        ref={scrollRef}
+        className="w-full whitespace-nowrap overflow-x-auto cursor-grab active:cursor-grabbing select-none scrollbar-none border-t bg-background"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+     >
+        <div className="flex h-16 items-center w-max min-w-full space-x-1 px-2">
             <BotaoRecurso icon={Type} label="Texto" onClick={() => handlePanelChange("texto")} isActive={activePanel === "texto"} />
             <BotaoRecurso icon={RectangleHorizontal} label="Canvas" onClick={() => handlePanelChange("canvas")} isActive={activePanel === "canvas"} />
             <BotaoRecurso icon={Paintbrush} label="Cores" onClick={() => handlePanelChange("cores")} isActive={activePanel === "cores"} />
             <BotaoRecurso icon={Wand2} label="Estilo" onClick={() => handlePanelChange("estilo")} isActive={activePanel === "estilo"} />
             <BotaoRecurso icon={LayoutTemplate} label="Fundo" onClick={() => handlePanelChange("fundo")} isActive={activePanel === "fundo"} />
             <BotaoRecurso icon={Film} label="Película" onClick={() => handlePanelChange("filtro")} isActive={activePanel === "filtro"} />
+            <BotaoRecurso icon={Volume2} label="Áudio" onClick={() => handlePanelChange("audio")} isActive={activePanel === "audio"} />
+            <BotaoRecurso icon={Music} label="Música" onClick={() => handlePanelChange("musica")} isActive={activePanel === "musica"} />
             <BotaoRecurso icon={LayoutTemplate} label="Modelos" onClick={() => handlePanelChange("modelos")} isActive={activePanel === "modelos"} />
             <BotaoRecurso icon={UserCheck} label="Assinatura" onClick={() => handlePanelChange("assinatura")} isActive={activePanel === "assinatura"} />
             <BotaoRecurso icon={ImageUp} label="Logo" onClick={() => handlePanelChange("logo")} isActive={activePanel === "logo"} />
+            <BotaoRecurso icon={Layers} label="Camadas" onClick={() => handlePanelChange("camadas")} isActive={activePanel === "camadas"} />
         </div>
-        <ScrollBar orientation="horizontal" className="h-2" />
-    </ScrollArea>
+    </div>
   );
 
   return (

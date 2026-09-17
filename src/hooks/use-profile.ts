@@ -34,79 +34,77 @@ export interface ProfileData {
   themeCardAlt4Color: string;
 }
 
+const defaultState: ProfileData = {
+  username: "Seu Nome",
+  social: "@seuusario",
+  photo: null,
+  iconUrl: '',
+  showIcon: false,
+  showDate: false,
+  logo: null,
+  logo2: null,
+  memeFontSize: 1.3,
+  memeShowLogo: false,
+  memeLogoScale: 40,
+  brandColors: ["#3b82f6", "#1e293b", "#ffffff"],
+  // Valores padrão para o tema
+  themeTitleColor: "#3b82f6", // Primary blue roughly
+  themeSubtitleColor: "#94a3b8",
+  themeSecondaryTextColor: "#64748b",
+  themeInterfaceIconColor: "#94a3b8",
+  themeMenuIconColor: "#94a3b8",
+  themeFavoriteColor: "#eab308",
+  themeCardTextColor: "#ffffff",
+  themeCardBorderColor: "#1e293b",
+  themeCardAlt1Color: "#020617",
+  themeCardAlt2Color: "#0f172a",
+  themeCardAlt3Color: "#020617",
+  themeCardAlt4Color: "#0f172a",
+};
+
 // Hook para gerenciar os dados do perfil do usuário usando o localStorage.
 export const useProfile = () => {
-  const defaultState: ProfileData = {
-    username: "Seu Nome",
-    social: "@seuusario",
-    photo: null,
-    iconUrl: '',
-    showIcon: false,
-    showDate: false,
-    logo: null,
-    logo2: null,
-    memeFontSize: 1.3,
-    memeShowLogo: false,
-    memeLogoScale: 40,
-    brandColors: ["#3b82f6", "#1e293b", "#ffffff"],
-    // Valores padrão para o tema
-    themeTitleColor: "#3b82f6", // Primary blue roughly
-    themeSubtitleColor: "#94a3b8",
-    themeSecondaryTextColor: "#64748b",
-    themeInterfaceIconColor: "#94a3b8",
-    themeMenuIconColor: "#94a3b8",
-    themeFavoriteColor: "#eab308",
-    themeCardTextColor: "#ffffff",
-    themeCardBorderColor: "#1e293b",
-    themeCardAlt1Color: "#020617",
-    themeCardAlt2Color: "#0f172a",
-    themeCardAlt3Color: "#020617",
-    themeCardAlt4Color: "#0f172a",
-  };
+  const [profile, setProfile] = useState<ProfileData>(defaultState);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  const [profile, setProfile] = useState<ProfileData>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const storedProfile = localStorage.getItem(PROFILE_KEY);
-        if (storedProfile) {
-          const loadedProfile = JSON.parse(storedProfile);
-          return {
-            username: loadedProfile.username !== undefined ? loadedProfile.username : defaultState.username,
-            social: loadedProfile.social !== undefined ? loadedProfile.social : defaultState.social,
-            photo: loadedProfile.photo !== undefined ? loadedProfile.photo : defaultState.photo,
-            iconUrl: loadedProfile.iconUrl !== undefined ? loadedProfile.iconUrl : defaultState.iconUrl,
-            showIcon: loadedProfile.showIcon !== undefined ? loadedProfile.showIcon : defaultState.showIcon,
-            showDate: loadedProfile.showDate !== undefined ? loadedProfile.showDate : defaultState.showDate,
-            logo: loadedProfile.logo !== undefined ? loadedProfile.logo : defaultState.logo,
-            logo2: loadedProfile.logo2 !== undefined ? loadedProfile.logo2 : defaultState.logo2,
-            memeFontSize: loadedProfile.memeFontSize !== undefined ? loadedProfile.memeFontSize : defaultState.memeFontSize,
-            memeShowLogo: loadedProfile.memeShowLogo !== undefined ? loadedProfile.memeShowLogo : defaultState.memeShowLogo,
-            memeLogoScale: loadedProfile.memeLogoScale !== undefined ? loadedProfile.memeLogoScale : defaultState.memeLogoScale,
-            brandColors: loadedProfile.brandColors !== undefined ? loadedProfile.brandColors : defaultState.brandColors,
-            // Carregamento dos novos campos de tema com fallback para o defaultState
-            themeTitleColor: loadedProfile.themeTitleColor || defaultState.themeTitleColor,
-            themeSubtitleColor: loadedProfile.themeSubtitleColor || defaultState.themeSubtitleColor,
-            themeSecondaryTextColor: loadedProfile.themeSecondaryTextColor || defaultState.themeSecondaryTextColor,
-            themeInterfaceIconColor: loadedProfile.themeInterfaceIconColor || defaultState.themeInterfaceIconColor,
-            themeMenuIconColor: loadedProfile.themeMenuIconColor || defaultState.themeMenuIconColor,
-            themeFavoriteColor: loadedProfile.themeFavoriteColor || defaultState.themeFavoriteColor,
-            themeCardTextColor: loadedProfile.themeCardTextColor || defaultState.themeCardTextColor,
-            themeCardBorderColor: loadedProfile.themeCardBorderColor || defaultState.themeCardBorderColor,
-            themeCardAlt1Color: loadedProfile.themeCardAlt1Color || defaultState.themeCardAlt1Color,
-            themeCardAlt2Color: loadedProfile.themeCardAlt2Color || defaultState.themeCardAlt2Color,
-            themeCardAlt3Color: loadedProfile.themeCardAlt3Color || defaultState.themeCardAlt3Color,
-            themeCardAlt4Color: loadedProfile.themeCardAlt4Color || defaultState.themeCardAlt4Color,
-          };
-        }
-      } catch (error) {
-        console.error("Failed to parse profile from localStorage", error);
+  useEffect(() => {
+    try {
+      const storedProfile = localStorage.getItem(PROFILE_KEY);
+      if (storedProfile) {
+        const loadedProfile = JSON.parse(storedProfile);
+        setProfile({
+          username: loadedProfile.username !== undefined ? loadedProfile.username : defaultState.username,
+          social: loadedProfile.social !== undefined ? loadedProfile.social : defaultState.social,
+          photo: loadedProfile.photo !== undefined ? loadedProfile.photo : defaultState.photo,
+          iconUrl: loadedProfile.iconUrl !== undefined ? loadedProfile.iconUrl : defaultState.iconUrl,
+          showIcon: loadedProfile.showIcon !== undefined ? loadedProfile.showIcon : defaultState.showIcon,
+          showDate: loadedProfile.showDate !== undefined ? loadedProfile.showDate : defaultState.showDate,
+          logo: loadedProfile.logo !== undefined ? loadedProfile.logo : defaultState.logo,
+          logo2: loadedProfile.logo2 !== undefined ? loadedProfile.logo2 : defaultState.logo2,
+          memeFontSize: loadedProfile.memeFontSize !== undefined ? loadedProfile.memeFontSize : defaultState.memeFontSize,
+          memeShowLogo: loadedProfile.memeShowLogo !== undefined ? loadedProfile.memeShowLogo : defaultState.memeShowLogo,
+          memeLogoScale: loadedProfile.memeLogoScale !== undefined ? loadedProfile.memeLogoScale : defaultState.memeLogoScale,
+          brandColors: loadedProfile.brandColors !== undefined ? loadedProfile.brandColors : defaultState.brandColors,
+          themeTitleColor: loadedProfile.themeTitleColor || defaultState.themeTitleColor,
+          themeSubtitleColor: loadedProfile.themeSubtitleColor || defaultState.themeSubtitleColor,
+          themeSecondaryTextColor: loadedProfile.themeSecondaryTextColor || defaultState.themeSecondaryTextColor,
+          themeInterfaceIconColor: loadedProfile.themeInterfaceIconColor || defaultState.themeInterfaceIconColor,
+          themeMenuIconColor: loadedProfile.themeMenuIconColor || defaultState.themeMenuIconColor,
+          themeFavoriteColor: loadedProfile.themeFavoriteColor || defaultState.themeFavoriteColor,
+          themeCardTextColor: loadedProfile.themeCardTextColor || defaultState.themeCardTextColor,
+          themeCardBorderColor: loadedProfile.themeCardBorderColor || defaultState.themeCardBorderColor,
+          themeCardAlt1Color: loadedProfile.themeCardAlt1Color || defaultState.themeCardAlt1Color,
+          themeCardAlt2Color: loadedProfile.themeCardAlt2Color || defaultState.themeCardAlt2Color,
+          themeCardAlt3Color: loadedProfile.themeCardAlt3Color || defaultState.themeCardAlt3Color,
+          themeCardAlt4Color: loadedProfile.themeCardAlt4Color || defaultState.themeCardAlt4Color,
+        });
       }
+    } catch (error) {
+      console.error("Failed to parse profile from localStorage", error);
+    } finally {
+      setIsLoaded(true);
     }
-    return defaultState;
-  });
-  const [isLoaded, setIsLoaded] = useState(() => {
-    return typeof window !== "undefined";
-  });
+  }, []);
 
   // Função para atualizar e salvar o perfil.
   const updateProfile = useCallback((newProfileData: Partial<ProfileData>) => {

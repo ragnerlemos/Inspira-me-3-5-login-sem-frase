@@ -189,14 +189,33 @@ export function PreviewCanva(props: PreviewCanvaProps) {
     return <div className="absolute inset-0 pointer-events-none z-[15]" style={{ background }} />;
   };
 
-  const handleTextBoxResize = (next: { widthPct: number; heightPx: number; fontSize?: number }) => {
+  const handleTextBoxResize = (next: { 
+    widthPct: number; 
+    heightPx: number; 
+    marginLeftPct?: number; 
+    marginRightPct?: number; 
+    fontSize?: number; 
+    lineHeight?: number 
+  }) => {
     const update: Partial<EditorState> = {
       textBoxWidth: next.widthPct,
       textBoxHeight: next.heightPx,
     };
 
+    if (next.marginLeftPct !== undefined) {
+      update.textMarginLeft = next.marginLeftPct;
+    }
+
+    if (next.marginRightPct !== undefined) {
+      update.textMarginRight = next.marginRightPct;
+    }
+
     if (next.fontSize !== undefined) {
       update.fontSize = next.fontSize;
+    }
+
+    if (next.lineHeight !== undefined) {
+      update.lineHeight = next.lineHeight;
     }
 
     updateState(update);

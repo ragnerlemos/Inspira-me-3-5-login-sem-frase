@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
+  Home,
   FileText,
   Clapperboard,
   Feather,
@@ -43,7 +44,7 @@ import { AuthButton } from './auth-button';
 function MainNavigationLinks({ onLinkClick }: { onLinkClick?: () => void }) {
   return (
     <>
-      <NavLink href="/frases" icon={FileText} label="Frases" onClick={onLinkClick} />
+      <NavLink href="/frases" icon={Home} label="Início" onClick={onLinkClick} />
       <NavLink href="/editor-de-video" icon={Edit} label="Editor" onClick={onLinkClick} />
       <NavLink href="/editor-de-video?batch=true" icon={Layers} label="Lote" onClick={onLinkClick} />
       <NavLink href="/favoritos" icon={Star} label="Favoritos" onClick={onLinkClick} />
@@ -53,22 +54,13 @@ function MainNavigationLinks({ onLinkClick }: { onLinkClick?: () => void }) {
     </>
   );
 }
-function SettingsNavigationLinks({ onLinkClick }: { onLinkClick?: () => void }) {
-    return (
-        <>
-            <NavLink href="/cadastro" icon={PlusSquare} label="Cadastro" onClick={onLinkClick} />
-            <NavLink href="/perfil" icon={UserIcon} label="Central de Marca" onClick={onLinkClick} />
-        </>
-    )
-}
-
 function SettingsDropdown({ onLinkClick }: { onLinkClick?: () => void }) {
     const { theme, setTheme } = useTheme();
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-9 px-2 text-muted-foreground hover:text-primary gap-1">
+                <Button variant="ghost" size="sm" className="h-9 px-2 text-muted-foreground hover:text-primary gap-1 active:scale-95 transition-transform duration-100 select-none">
                     <Settings className="w-4 h-4" />
                     <span className="hidden lg:inline">Configurações</span>
                     <ChevronDown className="w-3 h-3 opacity-50" />
@@ -76,6 +68,20 @@ function SettingsDropdown({ onLinkClick }: { onLinkClick?: () => void }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 border-border bg-popover/95 backdrop-blur-md">
                 <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5">Sua Conta</DropdownMenuLabel>
+
+                <DropdownMenuSeparator />
+                <Link href="/cadastro" onClick={onLinkClick}>
+                    <DropdownMenuItem className="cursor-pointer focus:bg-primary/10">
+                        <PlusSquare className="w-4 h-4 mr-2" />
+                        <span>Cadastro</span>
+                    </DropdownMenuItem>
+                </Link>
+                <Link href="/perfil" onClick={onLinkClick}>
+                    <DropdownMenuItem className="cursor-pointer focus:bg-primary/10">
+                        <UserIcon className="w-4 h-4 mr-2" />
+                        <span>Central de Marca</span>
+                    </DropdownMenuItem>
+                </Link>
                 <DropdownMenuSeparator />
                 <Link href="/assinatura" onClick={onLinkClick}>
                     <DropdownMenuItem className="cursor-pointer focus:bg-primary/10">
@@ -136,7 +142,7 @@ export function AppHeader() {
       {/* --- VISTA DESKTOP --- */}
       <div className="hidden md:flex items-center justify-between rounded-full bg-card p-2 shadow-sm">
         {/* Seção Esquerda: Logo e Nome */}
-        <Link href="/frases" className="flex items-center gap-2 text-3xl font-headline font-bold text-[var(--theme-title-color)] pl-4">
+        <Link href="/frases" prefetch={true} className="flex items-center gap-2 text-3xl font-headline font-bold text-[var(--theme-title-color)] pl-4">
           <Feather className="h-8 w-8 text-[var(--theme-interface-icon-color)]" />
           InspireMe
         </Link>
@@ -148,10 +154,7 @@ export function AppHeader() {
 
         {/* Seção Direita: Configurações, Perfil */}
         <div className="flex items-center gap-2 pr-2 ml-auto">
-            <nav className="flex items-center gap-1">
-                <SettingsNavigationLinks />
-            </nav>
-            <Separator orientation="vertical" className="h-8 mx-2" />
+
             <SettingsDropdown />
             <AuthButton />
         </div>
@@ -163,7 +166,7 @@ export function AppHeader() {
         <div className="flex items-center justify-start w-12 flex-shrink-0">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" className="active:scale-95 transition-transform duration-100">
                         <Menu className="h-6 w-6" />
                     </Button>
                 </SheetTrigger>
@@ -175,8 +178,6 @@ export function AppHeader() {
                     <ScrollArea className="flex-1">
                         <nav className="flex flex-col p-4 gap-2">
                             <MainNavigationLinks onLinkClick={() => setIsSheetOpen(false)} />
-                            <Separator className="my-2" />
-                            <SettingsNavigationLinks onLinkClick={() => setIsSheetOpen(false)} />
                         </nav>
                     </ScrollArea>
                 </SheetContent>
@@ -184,7 +185,7 @@ export function AppHeader() {
         </div>
 
         {/* Título Centralizado */}
-        <Link href="/frases" className="font-headline text-lg font-bold text-center truncate flex-1 text-[var(--theme-title-color)] flex items-center justify-center gap-2">
+        <Link href="/frases" prefetch={true} className="font-headline text-lg font-bold text-center truncate flex-1 text-[var(--theme-title-color)] flex items-center justify-center gap-2 active:opacity-80 transition-opacity">
            <Feather className="h-7 w-7 text-[var(--theme-interface-icon-color)]" />
            InspireMe
         </Link>
@@ -192,7 +193,7 @@ export function AppHeader() {
         {/* Slot Direito: Botão Voltar ou Auth */}
         <div className="flex items-center justify-end gap-2 pr-2 min-w-[48px]">
             {showBack ? (
-              <Button variant="ghost" size="icon" onClick={handleBack}>
+              <Button variant="ghost" size="icon" onClick={handleBack} className="active:scale-95 transition-transform duration-100">
                 <ChevronLeft className="h-6 w-6" />
               </Button>
             ) : (

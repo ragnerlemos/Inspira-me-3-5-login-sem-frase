@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, ReactNode, useMemo } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useTemplates } from "@/hooks/use-templates";
 import type { EditorState, EstiloTexto } from '../tipos';
@@ -26,6 +26,7 @@ export interface EditorContextType {
   onExportJPG: () => void;
   onExportPNG: () => void;
   onExportMP4: (options: ExportOptions, onProgress?: (p: number) => void) => Promise<{ blob: Blob | null; error?: string }>;
+  cancelarGeracaoVideo: () => void;
   applyTemplate: (templateState: Partial<EditorState>, strategy?: 'merge' | 'replace') => void;
 
   // Batch Properties
@@ -50,6 +51,7 @@ const MAX_HISTORY_LENGTH = 100;
 const cloneEditorState = (state: EditorState): EditorState => ({
   ...state,
   backgroundStyle: { ...state.backgroundStyle },
+  audioTracks: state.audioTracks ? state.audioTracks.map(track => ({ ...track })) : [],
 });
 
 export function EditorProvider({ children }: { children: ReactNode }) {
@@ -292,9 +294,43 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       captureAndDownload('png', toast, currentState, profile, baseTextStyle, textEffectsStyle, dropShadowStyle);
   }, [toast, currentState, profile, baseTextStyle, textEffectsStyle, dropShadowStyle]);
 
+  const exportAbortControllerRef = useRef<AbortController | null>(null);
+
+  const cancelarGeracaoVideo = useCallback(() => {
+    if (exportAbortControllerRef.current) {
+      exportAbortControllerRef.current.abort();
+      exportAbortControllerRef.current = null;
+      toast({ title: "Exportação Cancelada", description: "O processo de vídeo foi interrompido com sucesso." });
+    }
+  }, [toast]);
+
   const onExportMP4 = useCallback(async (options: ExportOptions, onProgress?: (p: number) => void): Promise<{ blob: Blob | null; error?: string }> => {
     if (!currentState || !profile) return { blob: null, error: 'Contexto ou perfil não encontrado' };
-    return await generateVideoBlob(toast, currentState, profile, baseTextStyle, textEffectsStyle, dropShadowStyle, 0, options, onProgress);
+    
+    if (exportAbortControllerRef.current) {
+      exportAbortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    exportAbortControllerRef.current = controller;
+
+    try {
+      const result = await generateVideoBlob(
+        toast, 
+        currentState, 
+        profile, 
+        baseTextStyle, 
+        textEffectsStyle, 
+        dropShadowStyle, 
+        0, 
+        { ...options, signal: controller.signal }, 
+        onProgress
+      );
+      return result;
+    } finally {
+      if (exportAbortControllerRef.current === controller) {
+        exportAbortControllerRef.current = null;
+      }
+    }
   }, [toast, currentState, profile, baseTextStyle, textEffectsStyle, dropShadowStyle]);
 
   const setBatchState = useCallback((state: Partial<{ 
@@ -438,6 +474,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     onExportJPG,
     onExportPNG,
     onExportMP4,
+    cancelarGeracaoVideo,
     applyTemplate,
     batchPages,
     currentPageIndex,
@@ -450,7 +487,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     duplicatePage,
     deletePage,
     reorderPages
-  }), [isReady, canUndo, canRedo, currentState, baseTextStyle, textEffectsStyle, dropShadowStyle, undo, redo, updateState, setInitialState, onSaveAsTemplate, onExportJPG, onExportPNG, onExportMP4, applyTemplate, batchPages, currentPageIndex, selectedPageIndices, changesApplyScope, batchCategory, batchSubCategory, setBatchState, switchPage, duplicatePage, deletePage, reorderPages]);
+  }), [isReady, canUndo, canRedo, currentState, baseTextStyle, textEffectsStyle, dropShadowStyle, undo, redo, updateState, setInitialState, onSaveAsTemplate, onExportJPG, onExportPNG, onExportMP4, cancelarGeracaoVideo, applyTemplate, batchPages, currentPageIndex, selectedPageIndices, changesApplyScope, batchCategory, batchSubCategory, setBatchState, switchPage, duplicatePage, deletePage, reorderPages]);
 
   return (
     <EditorContext.Provider value={value}>

@@ -113,7 +113,7 @@ export function SidebarEstiloTexto({ activeSubControl, ...props }: EstiloControl
                  <div className="space-y-2">
                     <Label>Estilo</Label>
                     <div className="grid grid-cols-2 gap-2">
-                        <Button variant={props.fontWeight === 'bold' ? 'secondary' : 'ghost'} onClick={() => props.onFontWeightChange(props.fontWeight === 'bold' ? 'normal' : 'bold')}><Bold className="mr-2" />Negrito</Button>
+                        <Button variant={props.fontWeight === 'bold' || props.fontWeight === '700' ? 'secondary' : 'ghost'} onClick={() => props.onFontWeightChange(props.fontWeight === 'bold' || props.fontWeight === '700' ? 'normal' : 'bold')}><Bold className="mr-2" />Negrito</Button>
                         <Button variant={props.fontStyle === 'italic' ? 'secondary' : 'ghost'} onClick={() => props.onFontStyleChange(props.fontStyle === 'italic' ? 'normal' : 'italic')}><Italic className="mr-2" />Itálico</Button>
                     </div>
                 </div>

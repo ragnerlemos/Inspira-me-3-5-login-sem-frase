@@ -1,0 +1,483 @@
+ ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+   ▲ Next.js 14.1.0
+   - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/24) ...
+Error: <Html> should not be imported outside of pages/_document.
+Read more: https://nextjs.org/docs/messages/no-document-import-in-page
+    at eu (/app/applet/node_modules/next/dist/compiled/next-server/pages.runtime.prod.js:16:5484)
+    at S (/app/applet/.next/server/chunks/1072.js:6:1253)
+    at renderWithHooks (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5658:16)
+    at renderIndeterminateComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5732:15)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5957:7)
+    at renderNodeDestructiveImpl (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6115:11)
+    at renderNodeDestructive (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6087:14)
+    at finishClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5688:3)
+    at renderClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5696:3)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5954:7)
+
+Error occurred prerendering page "/404". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: <Html> should not be imported outside of pages/_document.
+Read more: https://nextjs.org/docs/messages/no-document-import-in-page
+    at eu (/app/applet/node_modules/next/dist/compiled/next-server/pages.runtime.prod.js:16:5484)
+    at S (/app/applet/.next/server/chunks/1072.js:6:1253)
+    at renderWithHooks (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5658:16)
+    at renderIndeterminateComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5732:15)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5957:7)
+    at renderNodeDestructiveImpl (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6115:11)
+    at renderNodeDestructive (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6087:14)
+    at finishClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5688:3)
+    at renderClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5696:3)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5954:7)
+Error: <Html> should not be imported outside of pages/_document.
+Read more: https://nextjs.org/docs/messages/no-document-import-in-page
+    at eu (/app/applet/node_modules/next/dist/compiled/next-server/pages.runtime.prod.js:16:5484)
+    at S (/app/applet/.next/server/chunks/1072.js:6:1253)
+    at renderWithHooks (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5658:16)
+    at renderIndeterminateComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5732:15)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5957:7)
+    at renderNodeDestructiveImpl (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6115:11)
+    at renderNodeDestructive (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6087:14)
+    at finishClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5688:3)
+    at renderClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5696:3)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5954:7)
+
+Error occurred prerendering page "/500". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: <Html> should not be imported outside of pages/_document.
+Read more: https://nextjs.org/docs/messages/no-document-import-in-page
+    at eu (/app/applet/node_modules/next/dist/compiled/next-server/pages.runtime.prod.js:16:5484)
+    at S (/app/applet/.next/server/chunks/1072.js:6:1253)
+    at renderWithHooks (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5658:16)
+    at renderIndeterminateComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5732:15)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5957:7)
+    at renderNodeDestructiveImpl (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6115:11)
+    at renderNodeDestructive (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6087:14)
+    at finishClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5688:3)
+    at renderClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5696:3)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5954:7)
+   Generating static pages (6/24) 
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/_not-found". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/assinatura". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/cadastro/abas". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+   Generating static pages (12/24) 
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/configuracoes". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/editor-de-video/ferramentas". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/frases". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/galeria". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/favoritos". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/perfil". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+   Generating static pages (18/24) 
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/premium". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/projetos". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/modelos". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/editor-de-video". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+
+Error occurred prerendering page "/". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:108898)
+    at m (/app/applet/.next/server/chunks/6816.js:39:21769)
+    at f (/app/applet/.next/server/chunks/6816.js:39:12899)
+    at as (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+ ✓ Generating static pages (24/24) 
+
+> Export encountered errors on following paths:
+	/_error: /404
+	/_error: /500
+	/_not-found
+	/assinatura/page: /assinatura
+	/cadastro/abas/page: /cadastro/abas
+	/configuracoes/page: /configuracoes
+	/editor-de-video/ferramentas/page: /editor-de-video/ferramentas
+	/editor-de-video/page: /editor-de-video
+	/favoritos/page: /favoritos
+	/frases/page: /frases
+	/galeria/page: /galeria
+	/modelos/page: /modelos
+	/page: /
+	/perfil/page: /perfil
+	/premium/page: /premium
+	/projetos/page: /projetos

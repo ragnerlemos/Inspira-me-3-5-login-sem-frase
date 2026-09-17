@@ -15,7 +15,7 @@ interface ModeloPadraoProps {
     profile: ProfileData;
     isTextSelected: boolean;
     setIsTextSelected: (value: boolean) => void;
-    onTextBoxResize: (next: { widthPct: number; heightPx: number; fontSize?: number }) => void;
+    onTextBoxResize: (next: { widthPct: number; heightPx: number; fontSize?: number; lineHeight?: number }) => void;
     onTextChange: (text: string) => void;
 }
 
@@ -79,12 +79,15 @@ export function ModeloPadrao({
       ...textEffectsStyle,
       textAlign: editorState.textAlign,
       fontSize: `${editorState.fontSize}rem`,
+      lineHeight: editorState.lineHeight ?? 1.3,
+      fontWeight: editorState.fontWeight || baseTextStyle.fontWeight || 'bold',
+      fontStyle: editorState.fontStyle || baseTextStyle.fontStyle || 'normal',
     };
     
     return (
         <div className="relative w-full h-full">
             <div
-                className="absolute w-full px-8"
+                className="absolute w-full"
                 style={{
                     top: `${textVerticalPosition}%`,
                     left: '50%',
@@ -94,19 +97,23 @@ export function ModeloPadrao({
                 }}
             >
                 <ResizableTextBox
-                    widthPct={textBoxWidth ?? 80}
+                    widthPct={textBoxWidth ?? 100}
                     heightPx={textBoxHeight ?? 0}
+                    marginLeftPct={editorState.textMarginLeft}
+                    marginRightPct={editorState.textMarginRight}
                     fontSize={editorState.fontSize}
+                    lineHeight={editorState.lineHeight ?? 1.3}
                     isSelected={isTextSelected}
                     editable
                     text={text}
                     onTextChange={onTextChange}
                     onSelect={() => setIsTextSelected(true)}
                     onResize={onTextBoxResize}
+                    style={combinedTextStyle}
                 >
                     <div
-                        style={combinedTextStyle}
-                        className="break-words relative"
+                        style={{ ...combinedTextStyle, width: '100%' }}
+                        className="relative"
                     >
                         {renderTextWithEmojis()}
                     </div>

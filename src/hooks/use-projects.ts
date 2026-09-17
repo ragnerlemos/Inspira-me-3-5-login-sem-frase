@@ -19,22 +19,21 @@ export interface SavedProject {
 
 // Hook para gerenciar os projetos salvos usando o localStorage.
 export const useProjects = () => {
-  const [projects, setProjects] = useState<SavedProject[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const storedProjects = localStorage.getItem(PROJECTS_KEY);
-        if (storedProjects) {
-          return JSON.parse(storedProjects);
-        }
-      } catch (error) {
-        console.error("Failed to parse saved projects from localStorage", error);
+  const [projects, setProjects] = useState<SavedProject[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const storedProjects = localStorage.getItem(PROJECTS_KEY);
+      if (storedProjects) {
+        setProjects(JSON.parse(storedProjects));
       }
+    } catch (error) {
+      console.error("Failed to parse saved projects from localStorage", error);
+    } finally {
+      setIsLoaded(true);
     }
-    return [];
-  });
-  const [isLoaded, setIsLoaded] = useState(() => {
-    return typeof window !== "undefined";
-  });
+  }, []);
 
   // Salva a lista de projetos no localStorage.
   const saveProjects = useCallback((projectsToSave: SavedProject[]) => {

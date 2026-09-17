@@ -10,15 +10,19 @@ import {
     Egg, 
     PartyPopper, 
     BookOpen,
+    Folder,
     type LucideIcon 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EditorState } from '../editor-de-video/tipos';
 import { QuoteWithAuthor } from './types';
 import type { ProfileData } from '@/hooks/use-profile';
+import type { Template } from '@/hooks/use-templates';
 
 export const getCategoryIcon = (categoryName: string): LucideIcon => {
     const lowerCaseName = categoryName.toLowerCase();
+
+    if (['nomes', 'trend', 'frases', 'dias da semana', 'datas comemorativas'].some(cat => lowerCaseName.includes(cat))) return Folder;
 
     if (lowerCaseName.includes('bom dia')) return Sun;
     if (lowerCaseName.includes('boa noite')) return Moon;
@@ -30,7 +34,6 @@ export const getCategoryIcon = (categoryName: string): LucideIcon => {
     if (lowerCaseName.includes('pais')) return Gift;
     if (lowerCaseName.includes('páscoa')) return Egg;
     if (lowerCaseName.includes('festa junina')) return PartyPopper;
-    if (lowerCaseName.includes('datas comemorativas')) return Calendar;
 
     return BookOpen;
 };
@@ -48,8 +51,13 @@ export const getCardClasses = () => {
     );
 };
 
-export const getMemeEditorState = (quote: QuoteWithAuthor, profile: ProfileData): EditorState => {
-    return {
+export const getMemeEditorState = (
+    quote: QuoteWithAuthor, 
+    profile: ProfileData, 
+    layoutTemplate?: Template,
+    backgroundTemplate?: Template
+): EditorState => {
+    const baseState: EditorState = {
         text: quote.quote,
         fontFamily: "Poppins",
         fontSize: profile.memeFontSize,
@@ -90,4 +98,20 @@ export const getMemeEditorState = (quote: QuoteWithAuthor, profile: ProfileData)
         signatureBgOpacity: 50,
         profileVerticalPosition: 50,
     };
+
+    let finalState: EditorState = { ...baseState };
+
+    if (backgroundTemplate) {
+        finalState = { ...finalState, ...backgroundTemplate.editorState };
+    }
+
+    if (layoutTemplate) {
+        finalState = { ...finalState, ...layoutTemplate.editorState };
+        finalState.activeTemplateId = layoutTemplate.editorState?.activeTemplateId || layoutTemplate.id;
+    }
+
+    // Ensure the quote text is not overwritten by empty text from templates
+    finalState.text = quote.quote;
+
+    return finalState;
 };

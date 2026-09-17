@@ -1,6 +1,10 @@
 'use client';
 
 import { toCanvas } from 'html-to-image';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { toBlobURL } from '@ffmpeg/util';
+import { exportWithWebCodecs } from './exportar-webcodecs';
+import { mixAudioTracksToBuffer } from './utils/audio-mixer';
 import type { EditorState, EstiloTexto } from './tipos';
 import type { ProfileData } from '@/hooks/use-profile';
 import type { ExportOptions } from './components/export-modal';
@@ -248,20 +252,140 @@ const imgToBase64 = async (url: string): Promise<string> => {
     }
 };
 
+const getCustomWorkerBlobURL = (): string => {
+    const workerCode = `
+        let ffmpeg;
+        const FFMessageType = {
+            LOAD: "LOAD", EXEC: "EXEC", FFPROBE: "FFPROBE", WRITE_FILE: "WRITE_FILE",
+            READ_FILE: "READ_FILE", DELETE_FILE: "DELETE_FILE", RENAME: "RENAME",
+            CREATE_DIR: "CREATE_DIR", LIST_DIR: "LIST_DIR", DELETE_DIR: "DELETE_DIR",
+            ERROR: "ERROR", DOWNLOAD: "DOWNLOAD", PROGRESS: "PROGRESS", LOG: "LOG",
+            MOUNT: "MOUNT", UNMOUNT: "UNMOUNT"
+        };
+
+        const load = async ({ coreURL, wasmURL, workerURL }) => {
+            const first = !ffmpeg;
+            try {
+                if (!self.createFFmpegCore) {
+                    const dynamicImport = new Function('url', 'return import(url)');
+                    const mod = await dynamicImport(coreURL);
+                    self.createFFmpegCore = mod.default || mod;
+                }
+            } catch (e) {
+                console.error('Worker core import error:', e);
+                throw e;
+            }
+
+            const _wasmURL = wasmURL ? wasmURL : coreURL.replace(/\\.js$/g, ".wasm");
+            const _workerURL = workerURL ? workerURL : coreURL.replace(/\\.js$/g, ".worker.js");
+
+            ffmpeg = await self.createFFmpegCore({
+                mainScriptUrlOrBlob: \`\${coreURL}#\${btoa(JSON.stringify({ wasmURL: _wasmURL, workerURL: _workerURL }))}\`,
+            });
+
+            ffmpeg.setLogger((data) => self.postMessage({ type: FFMessageType.LOG, data }));
+            ffmpeg.setProgress((data) => self.postMessage({ type: FFMessageType.PROGRESS, data }));
+            return first;
+        };
+
+        const exec = ({ args, timeout = -1 }) => {
+            ffmpeg.setTimeout(timeout);
+            ffmpeg.exec(...args);
+            const ret = ffmpeg.ret;
+            ffmpeg.reset();
+            return ret;
+        };
+
+        const writeFile = ({ path, data }) => {
+            ffmpeg.FS.writeFile(path, data);
+            return true;
+        };
+
+        const readFile = ({ path, encoding }) => ffmpeg.FS.readFile(path, { encoding });
+        const deleteFile = ({ path }) => { ffmpeg.FS.unlink(path); return true; };
+        const rename = ({ oldPath, newPath }) => { ffmpeg.FS.rename(oldPath, newPath); return true; };
+        const createDir = ({ path }) => { ffmpeg.FS.mkdir(path); return true; };
+        const listDir = ({ path }) => {
+            const names = ffmpeg.FS.readdir(path);
+            const nodes = [];
+            for (const name of names) {
+                const stat = ffmpeg.FS.stat(\`\${path}/\${name}\`);
+                const isDir = ffmpeg.FS.isDir(stat.mode);
+                nodes.push({ name, isDir });
+            }
+            return nodes;
+        };
+        const deleteDir = ({ path }) => { ffmpeg.FS.rmdir(path); return true; };
+
+        self.onmessage = async ({ data: { id, type, data: _data } }) => {
+            const trans = [];
+            let data;
+            try {
+                if (type !== FFMessageType.LOAD && !ffmpeg) throw new Error("FFmpeg não inicializado");
+                switch (type) {
+                    case FFMessageType.LOAD: data = await load(_data); break;
+                    case FFMessageType.EXEC: data = exec(_data); break;
+                    case FFMessageType.WRITE_FILE: data = writeFile(_data); break;
+                    case FFMessageType.READ_FILE: data = readFile(_data); break;
+                    case FFMessageType.DELETE_FILE: data = deleteFile(_data); break;
+                    case FFMessageType.RENAME: data = rename(_data); break;
+                    case FFMessageType.CREATE_DIR: data = createDir(_data); break;
+                    case FFMessageType.LIST_DIR: data = listDir(_data); break;
+                    case FFMessageType.DELETE_DIR: data = deleteDir(_data); break;
+                    default: throw new Error("Tipo de mensagem desconhecido: " + type);
+                }
+            } catch (e) {
+                self.postMessage({ id, type: FFMessageType.ERROR, data: e.toString() });
+                return;
+            }
+            if (data instanceof Uint8Array) {
+                trans.push(data.buffer);
+            }
+            self.postMessage({ id, type, data }, trans);
+        };
+    `;
+    const blob = new Blob([workerCode], { type: 'text/javascript' });
+    return URL.createObjectURL(blob);
+};
+
 const loadFFmpeg = async (toast: ToastFn) => {
     if (ffmpeg) return ffmpeg;
+    
+    const cdns = [
+        'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm',
+        'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm'
+    ];
+
     try {
-        const { FFmpeg } = await import('@ffmpeg/ffmpeg');
-        const { toBlobURL } = await import('@ffmpeg/util');
-        ffmpeg = new FFmpeg();
-        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-        await ffmpeg.load({
-            coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-            wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-        });
+        const instance = new FFmpeg();
+
+        let loaded = false;
+        let lastError: any = null;
+        const classWorkerURL = getCustomWorkerBlobURL();
+
+        for (const baseURL of cdns) {
+            try {
+                const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
+                const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
+
+                await instance.load({ classWorkerURL, coreURL, wasmURL });
+                loaded = true;
+                break;
+            } catch (err) {
+                console.warn(`Falha ao carregar FFmpeg via ${baseURL}, tentando próximo CDN...`, err);
+                lastError = err;
+            }
+        }
+
+        if (!loaded) {
+            throw lastError || new Error('Não foi possível carregar o FFmpeg de nenhuma CDN.');
+        }
+
+        ffmpeg = instance;
         return ffmpeg;
-    } catch (err) {
-        toast({ variant: 'destructive', title: 'Erro de Motor', description: 'Falha ao carregar motor de vídeo.' });
+    } catch (err: any) {
+        console.error('Erro ao inicializar FFmpeg:', err);
+        toast({ variant: 'destructive', title: 'Erro de Motor', description: `Falha ao carregar motor FFmpeg: ${err?.message || 'Erro de conexão'}` });
         ffmpeg = null;
         return null;
     }
@@ -292,25 +416,28 @@ export const generateVideoBlob = async (
   const previewElement = document.getElementById('editor-preview-content');
   if (!previewElement) return { blob: null, error: 'Área de visualização não encontrada.' };
 
-  const ff = await loadFFmpeg(toast);
-  if (!ff) return { blob: null, error: 'Falha ao carregar motor de vídeo.' };
-
-  await document.fonts.ready;
-  
-  const fps = options?.fps || 30;
+  const fps = (options?.exportMode === 'gpu_native' || options?.exportMode === 'ffmpeg_fast')
+    ? Math.min(options?.fps || 30, 30)
+    : (options?.fps || 30);
   const scale = options?.renderScale || 1.5;
   const format = options?.format || 'mp4';
 
   const logicalWidth = previewElement.clientWidth;
   const logicalHeight = previewElement.clientHeight;
-  const width = Math.round(logicalWidth * scale);
-  const height = Math.round(logicalHeight * scale);
+
+  // Garantir dimensões pares obrigatórias (H.264 / GPU exige largura e altura pares)
+  const width = Math.floor((logicalWidth * scale) / 2) * 2;
+  const height = Math.floor((logicalHeight * scale) / 2) * 2;
+
+  if (width <= 0 || height <= 0) {
+    return { blob: null, error: 'Dimensões do vídeo inválidas.' };
+  }
 
   const outputCanvas = document.createElement('canvas');
   outputCanvas.width = width;
   outputCanvas.height = height;
   const ctx = outputCanvas.getContext('2d', { alpha: false });
-  if (!ctx) return { blob: null, error: 'Falha ao criar canvas.' };
+  if (!ctx) return { blob: null, error: 'Falha ao criar canvas de saída.' };
 
   const backgroundVideo = previewElement.querySelector('video') as HTMLVideoElement | null;
   const backgroundImageElement = previewElement.querySelector('img[alt="Background"]') as HTMLImageElement | null;
@@ -331,13 +458,13 @@ export const generateVideoBlob = async (
     } catch (e) {}
   }
 
-  // Ocultar mídias para captura limpa do overlay
+  // Ocultar mídias temporariamente para captura limpa das camadas de texto/overlay
   const videoStyle = backgroundVideo?.style.getPropertyValue('display') || '';
   const imgStyle = backgroundImageElement?.style.getPropertyValue('display') || '';
   if (backgroundVideo) backgroundVideo.style.display = 'none';
   if (backgroundImageElement) backgroundImageElement.style.display = 'none';
 
-  // Avatar/Imagens (CORS Neutralizado)
+  // Neutralizar CORS em imagens/avatares
   const allImages = Array.from(previewElement.querySelectorAll('img'));
   const originalSources = new Map<HTMLImageElement, string>();
   for (const img of allImages) {
@@ -348,7 +475,6 @@ export const generateVideoBlob = async (
 
   let overlayCanvas: HTMLCanvasElement;
   try {
-    // IMPORTANTE: Aqui usamos pixelRatio e as dimensões lógicas para o alinhamento ficar perfeito
     overlayCanvas = await toCanvas(previewElement, {
         pixelRatio: scale,
         width: logicalWidth,
@@ -366,10 +492,10 @@ export const generateVideoBlob = async (
     for (const [img, src] of originalSources) img.src = src;
     if (backgroundVideo) backgroundVideo.style.display = videoStyle;
     if (backgroundImageElement) backgroundImageElement.style.display = imgStyle;
-    return { blob: null, error: `Erro visual: ${err?.message || 'Erro CORS'}` };
+    return { blob: null, error: `Erro visual na sobreposição: ${err?.message || 'Erro CORS'}` };
   }
 
-  // Restaurar DOM
+  // Restaurar estado visual do DOM
   for (const [img, src] of originalSources) img.src = src;
   if (backgroundVideo) {
     backgroundVideo.style.display = videoStyle;
@@ -378,118 +504,252 @@ export const generateVideoBlob = async (
   }
   if (backgroundImageElement) backgroundImageElement.style.display = imgStyle;
 
+  // Função Auxiliar de Enquadramento
+  const drawCoverOn = (targetCtx: CanvasRenderingContext2D, image: CanvasImageSource, sWidth: number, sHeight: number, tWidth: number, tHeight: number) => {
+    const s = Math.max(tWidth / sWidth, tHeight / sHeight);
+    const x = (tWidth - sWidth * s) / 2;
+    const y = (tHeight - sHeight * s) / 2;
+    targetCtx.drawImage(image, x, y, sWidth * s, sHeight * s);
+  };
+
+  // Funcao Unificada de Renderizacao de Quadro (Fusao de video + filtros + overlays de texto)
+  const renderFrameToCanvas = async (drawCtx: CanvasRenderingContext2D, time: number, tWidth: number, tHeight: number) => {
+    drawCtx.fillStyle = '#000';
+    drawCtx.fillRect(0, 0, tWidth, tHeight);
+
+    applyFiltersToCtx(drawCtx, state.backgroundStyle);
+
+    if (state.backgroundStyle?.type === 'gradient' || state.backgroundStyle?.type === 'solid') {
+      drawCtx.fillStyle = state.backgroundStyle.value || '#000';
+      drawCtx.fillRect(0, 0, tWidth, tHeight);
+    }
+
+    if (bgImageInMem) {
+      drawCoverOn(drawCtx, bgImageInMem, bgImageInMem.width, bgImageInMem.height, tWidth, tHeight);
+    }
+
+    if (backgroundVideo) {
+      if (!backgroundVideo.crossOrigin) {
+        try { backgroundVideo.crossOrigin = 'anonymous'; } catch (e) {}
+      }
+
+      // Sincronização estrita de frame do vídeo via evento seeked
+      await new Promise<void>((resolve) => {
+        if (Math.abs(backgroundVideo.currentTime - time) < 0.015 && !backgroundVideo.seeking) {
+          resolve();
+          return;
+        }
+
+        let isDone = false;
+        const handleSeeked = () => {
+          if (!isDone) {
+            isDone = true;
+            backgroundVideo.removeEventListener('seeked', handleSeeked);
+            resolve();
+          }
+        };
+
+        backgroundVideo.addEventListener('seeked', handleSeeked, { once: true });
+        backgroundVideo.currentTime = time;
+
+        // Fallback de tempo para navegadores sem evento seeked garantido
+        setTimeout(() => {
+          if (!isDone) {
+            isDone = true;
+            backgroundVideo.removeEventListener('seeked', handleSeeked);
+            resolve();
+          }
+        }, 250);
+      });
+
+      if (backgroundVideo.videoWidth > 0 && backgroundVideo.videoHeight > 0) {
+        drawCoverOn(drawCtx, backgroundVideo, backgroundVideo.videoWidth, backgroundVideo.videoHeight, tWidth, tHeight);
+      }
+    }
+
+    drawCtx.filter = 'none';
+    drawCtx.drawImage(overlayCanvas, 0, 0, tWidth, tHeight);
+  };
+
+  // 1. MODO ULTRA WORKER OU GPU (WebCodecs Off-thread / Offscreen)
+  if (options?.exportMode === 'gpu_worker' || options?.exportMode === 'gpu_native' || (!options?.exportMode && typeof window !== 'undefined' && 'VideoEncoder' in window)) {
+    const isWorker = options?.exportMode === 'gpu_worker';
+    toast({ 
+      title: isWorker ? '⚡ Exportando via Worker GPU...' : '⚡ Exportando via GPU...', 
+      description: isWorker ? 'Renderização isolada da Thread Principal ativada.' : 'Aceleração de hardware ativada.' 
+    });
+    try {
+      const wcBlob = await exportWithWebCodecs({
+        width,
+        height,
+        fps,
+        duration: finalDuration,
+        bitrateMbps: options?.bitrateMbps || 8,
+        useWorker: isWorker,
+        signal: options?.signal,
+        onProgress,
+        renderFrame: async (wcCtx, t) => {
+          await renderFrameToCanvas(wcCtx, t, width, height);
+        }
+      });
+      if (onProgress) onProgress(100);
+      toast({ title: 'Sucesso! ⚡', description: isWorker ? 'Vídeo exportado com sucesso via Web Worker GPU.' : 'Vídeo exportado com aceleração de GPU.' });
+      return { blob: wcBlob };
+    } catch (gpuErr: any) {
+      console.error('[GPU WebCodecs Error]', gpuErr);
+      toast({ title: 'Aviso', description: `GPU offline falhou (${gpuErr?.message || 'Erro'}). Alternando para motor FFmpeg otimizado...` });
+    }
+  }
+
+  // 2. MOTOR FFMPEG (Passthrough / Fast / Quality)
+  const ff = await loadFFmpeg(toast);
+  if (!ff) return { blob: null, error: 'Falha ao carregar motor de vídeo.' };
+
+  await document.fonts.ready;
+
+  // VERIFICAÇÃO DE PASSTHROUGH (Stream Copy): Apenas se não houver NENHUM overlay visual, texto ou filtro
+  const hasVisualOverlays = Boolean(
+    (state.text && state.text.trim().length > 0) || 
+    (state.texts && state.texts.length > 0) || 
+    (state.stickers && state.stickers.length > 0) || 
+    state.showProfileSignature || 
+    state.showLogo || 
+    (state.backgroundStyle && (state.backgroundStyle.type !== 'media' || state.backgroundStyle.blur || state.backgroundStyle.brightness !== undefined || state.backgroundStyle.contrast !== undefined || state.backgroundStyle.grayscale || state.backgroundStyle.sepia || state.backgroundStyle.hueRotate)) ||
+    (state.filmOpacity && state.filmOpacity > 0) ||
+    (state.vignette && state.vignette.enabled)
+  );
+
+  if (!hasVisualOverlays && backgroundVideo && backgroundVideo.src) {
+    try {
+      toast({ title: '⚡ Passthrough Direto...', description: 'Copiando fluxo de vídeo original (2 seg).' });
+      const response = await fetch(backgroundVideo.src);
+      const videoBuffer = await response.arrayBuffer();
+      await ff.writeFile('input_pass.mp4', new Uint8Array(videoBuffer));
+      await ff.exec(['-i', 'input_pass.mp4', '-c', 'copy', 'output_pass.mp4']);
+      const passData = await ff.readFile('output_pass.mp4');
+      try { await ff.deleteFile('input_pass.mp4'); await ff.deleteFile('output_pass.mp4'); } catch(e) {}
+      if (onProgress) onProgress(100);
+      return { blob: new Blob([(passData as any).buffer], { type: 'video/mp4' }) };
+    } catch (passErr) {
+      console.warn('[Passthrough Fail, Fallback to frame render]', passErr);
+    }
+  }
+
   const frameCount = Math.round(finalDuration * fps);
   const frameTime = 1 / fps;
 
-  // Função auxiliar para desenhar mídia com "Object-Fit: Cover"
-  const drawCover = (image: CanvasImageSource, sWidth: number, sHeight: number) => {
-    const scale = Math.max(width / sWidth, height / sHeight);
-    const x = (width - sWidth * scale) / 2;
-    const y = (height - sHeight * scale) / 2;
-    ctx.drawImage(image, x, y, sWidth * scale, sHeight * scale);
-  };
-
-  toast({ title: 'Renderizando...', description: `Processando ${frameCount} quadros.` });
+  toast({ title: 'Renderizando...', description: `Processando ${frameCount} quadros com composição completa.` });
 
   for (let i = 0; i < frameCount; i++) {
+    if (options?.signal?.aborted) {
+      for (let j = 0; j < i; j++) { try { await ff.deleteFile(`frame${j}.jpg`); } catch(e) {} }
+      return { blob: null, error: 'Exportação cancelada pelo usuário.' };
+    }
     try {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, width, height);
+      await renderFrameToCanvas(ctx, i * frameTime, width, height);
 
-      // Apply background filters
-      applyFiltersToCtx(ctx, state.backgroundStyle);
+      const frameData = dataURLToUint8Array(outputCanvas.toDataURL('image/jpeg', 0.85));
+      await ff.writeFile(`frame${i}.jpg`, frameData);
 
-      // Fundo Cor/Gradiente
-      if (state.backgroundStyle?.type === 'gradient' || state.backgroundStyle?.type === 'solid') {
-          ctx.fillStyle = state.backgroundStyle.value || '#000';
-          ctx.fillRect(0, 0, width, height);
+      if (i % 5 === 0 || i === frameCount - 1) {
+        if (onProgress) onProgress(Math.round(((i + 1) / frameCount) * 100));
       }
+    } catch (err: any) {
+      console.error(`[FFmpeg Frame ${i} Error]`, err);
+    }
+  }
 
-      // Fundo Imagem
-      if (bgImageInMem) {
-          drawCover(bgImageInMem, bgImageInMem.width, bgImageInMem.height);
-      }
-
-      // Fundo Vídeo
-      if (backgroundVideo) {
-        backgroundVideo.currentTime = i * frameTime;
-        await new Promise(r => {
-          let resolved = false;
-          const done = () => { if (!resolved) { resolved = true; backgroundVideo.removeEventListener('seeked', done); r(null); } };
-          if (backgroundVideo.readyState >= 2) setTimeout(done, 10);
-          else { backgroundVideo.addEventListener('seeked', done); setTimeout(done, 150); }
-        });
-        drawCover(backgroundVideo, backgroundVideo.videoWidth, backgroundVideo.videoHeight);
-      }
-
-      // Reset filters for overlay
-      ctx.filter = 'none';
-
-      // Desenhar Sobreposição (Overlay)
-      ctx.drawImage(overlayCanvas, 0, 0, width, height);
-      
-      const frameData = dataURLToUint8Array(outputCanvas.toDataURL('image/png', 0.8));
-      await ff.writeFile(`frame${i}.png`, frameData);
-
-      if (i % 12 === 0) {
-          const progress = Math.round((i / frameCount) * 100);
-          if (onProgress) onProgress(progress);
-          toast({ title: 'Exportando vídeo...', description: `Progresso: ${progress}% (${i}/${frameCount})` });
-      }
-    } catch (err) {}
+  if (options?.signal?.aborted) {
+    for (let j = 0; j < frameCount; j++) { try { await ff.deleteFile(`frame${j}.jpg`); } catch(e) {} }
+    return { blob: null, error: 'Exportação cancelada pelo usuário.' };
   }
 
   if (onProgress) onProgress(100);
   
-  toast({ title: 'Finalizando...', description: `Salvando arquivo ${format.toUpperCase()} final.` });
+  toast({ title: 'Finalizando...', description: `Compilando vídeo ${format.toUpperCase()} final com mixagem de áudio.` });
   try {
     const bitrate = options?.bitrateMbps ? `${options.bitrateMbps}M` : '5M';
-    let vcodec = 'libx264';
-    let ext = 'mp4';
-    let ffArgs = [];
+    const preset = options?.exportMode === 'ffmpeg_quality' ? 'medium' : 'ultrafast';
+    const crf = options?.exportMode === 'ffmpeg_quality' ? '20' : '28';
 
+    // Processamento da Trilha Sonora / Mixagem de Áudio
+    let hasAudioFile = false;
+    if (state.audioTracks && state.audioTracks.length > 0) {
+      try {
+        const audioBlob = await mixAudioTracksToBuffer(state.audioTracks, finalDuration);
+        if (audioBlob) {
+          const audioArrayBuffer = await audioBlob.arrayBuffer();
+          await ff.writeFile('audio_mix.wav', new Uint8Array(audioArrayBuffer));
+          hasAudioFile = true;
+        }
+      } catch (audioErr) {
+        console.warn('[Exportar] Falha ao mixar áudio para FFmpeg:', audioErr);
+      }
+    }
+
+    let ffArgs: string[] = [];
     if (format === 'webm') {
-        ext = 'webm';
-        vcodec = 'libvpx-vp9';
-        ffArgs = [
-          '-framerate', `${fps}`, 
-          '-i', 'frame%d.png', 
-          '-c:v', vcodec,
-          '-b:v', bitrate,
-          '-quality', 'realtime', // Good for webm speed
-          'output.webm'
-        ];
+      ffArgs = [
+        '-framerate', `${fps}`,
+        '-i', 'frame%d.jpg',
+      ];
+      if (hasAudioFile) {
+        ffArgs.push('-i', 'audio_mix.wav', '-c:a', 'libopus', '-b:a', '128k');
+      }
+      ffArgs.push(
+        '-c:v', 'libvpx-vp9',
+        '-b:v', bitrate,
+        '-quality', 'realtime',
+        '-cpu-used', '8',
+        'output.webm'
+      );
     } else if (format === 'gif') {
-        ext = 'gif';
-        ffArgs = [
-          '-framerate', `${Math.min(fps, 15)}`, // GIFs don't need 60fps usually
-          '-i', 'frame%d.png',
-          '-vf', 'split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse',
-          'output.gif'
-        ];
+      ffArgs = [
+        '-framerate', `${Math.min(fps, 15)}`,
+        '-i', 'frame%d.jpg',
+        '-vf', 'split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse',
+        'output.gif'
+      ];
     } else {
-        // default MP4
-        ffArgs = [
-          '-framerate', `${fps}`, 
-          '-i', 'frame%d.png', 
-          '-c:v', vcodec, 
-          '-pix_fmt', 'yuv420p', 
-          '-preset', 'ultrafast',
-          '-b:v', bitrate,
-          '-crf', '30',
-          'output.mp4'
-        ];
+      ffArgs = [
+        '-framerate', `${fps}`,
+        '-i', 'frame%d.jpg',
+      ];
+      if (hasAudioFile) {
+        ffArgs.push('-i', 'audio_mix.wav', '-c:a', 'aac', '-b:a', '192k', '-shortest');
+      }
+      ffArgs.push(
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+        '-preset', preset,
+        '-tune', 'zerolatency',
+        '-b:v', bitrate,
+        '-crf', crf,
+        'output.mp4'
+      );
+    }
+
+    if (options?.signal?.aborted) {
+      for (let j = 0; j < frameCount; j++) { try { await ff.deleteFile(`frame${j}.jpg`); } catch(e) {} }
+      return { blob: null, error: 'Exportação cancelada pelo usuário.' };
     }
 
     await ff.exec(ffArgs);
+
+    const ext = format === 'webm' ? 'webm' : format === 'gif' ? 'gif' : 'mp4';
     const data = await ff.readFile(`output.${ext}`);
-    // Limpeza em lote (opcional: ff.deleteFile em loop pode ser lento mas evita crash)
-    for (let i = 0; i < frameCount; i++) { try { await ff.deleteFile(`frame${i}.png`); } catch(e) {} }
     
+    // Limpeza de arquivos temporários
+    for (let i = 0; i < frameCount; i++) { try { await ff.deleteFile(`frame${i}.jpg`); } catch(e) {} }
+    try { await ff.deleteFile('audio_mix.wav'); } catch(e) {}
+    try { await ff.deleteFile(`output.${ext}`); } catch(e) {}
+
     const mimeType = format === 'gif' ? 'image/gif' : `video/${format}`;
     return { blob: new Blob([(data as any).buffer], { type: mimeType }) };
   } catch (err: any) {
-    return { blob: null, error: `Erro na finalização: ${err.message}` };
+    for (let i = 0; i < frameCount; i++) { try { await ff.deleteFile(`frame${i}.jpg`); } catch(e) {} }
+    return { blob: null, error: `Erro na finalização: ${err?.message || 'Erro FFmpeg'}` };
   }
 };
+
 

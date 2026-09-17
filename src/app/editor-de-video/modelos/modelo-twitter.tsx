@@ -18,7 +18,7 @@ interface ModeloTwitterProps {
     profile: ProfileData;
     isTextSelected: boolean;
     setIsTextSelected: (value: boolean) => void;
-    onTextBoxResize: (next: { widthPct: number; heightPx: number; fontSize?: number }) => void;
+    onTextBoxResize: (next: { widthPct: number; heightPx: number; fontSize?: number; lineHeight?: number }) => void;
     onTextChange: (text: string) => void;
 }
 
@@ -47,14 +47,17 @@ export function ModeloTwitter({
       ...textEffectsStyle,
       color: textColor || '#FFFFFF', // Garante que a cor seja aplicada
       textAlign: editorState.textAlign,
-      lineHeight: 1.4,
-      fontSize: `${editorState.fontSize}rem`
+      lineHeight: editorState.lineHeight ?? 1.4,
+      fontSize: `${editorState.fontSize}rem`,
+      fontWeight: editorState.fontWeight || baseTextStyle.fontWeight || 'bold',
+      fontStyle: editorState.fontStyle || baseTextStyle.fontStyle || 'normal',
     };
 
     return (
-        <div className="relative w-full h-full p-12 flex items-center justify-center">
-            <div className="w-full">
-                 <div className="flex items-start gap-3">
+        <div className="relative w-full h-full px-8 py-12 flex items-center justify-center">
+            {/* O marginBottom empurra o conteúdo para cima sem alterar as proporções originais */}
+            <div className="w-full" style={{ marginBottom: '45%' }}>
+                 <div className="flex items-start gap-3 mb-6">
                     <Avatar className="w-12 h-12 flex-shrink-0">
                         <AvatarImage src={profile.photo || ''} alt={profile.username} />
                         <AvatarFallback><User style={{ color: textColor }} /></AvatarFallback>
@@ -62,7 +65,7 @@ export function ModeloTwitter({
                     <div className="flex-1">
                         <div className="flex items-center justify-between">
                              <div className="flex flex-col">
-                                <p className="font-bold text-base" style={{ color: textColor }}>{profile.username}</p>
+                                <p className="font-bold text-base whitespace-nowrap" style={{ color: textColor }}>{profile.username}</p>
                                 <p className="text-sm" style={{ color: textColor, opacity: 0.7 }}>{profile.social}</p>
                             </div>
                             {showIcon && <Twitter className="h-6 w-6 text-[#1DA1F2] flex-shrink-0" />}
@@ -70,19 +73,24 @@ export function ModeloTwitter({
                     </div>
                 </div>
                 <ResizableTextBox
-                    widthPct={textBoxWidth ?? 80}
+                    align="left"
+                    widthPct={textBoxWidth ?? 100}
                     heightPx={textBoxHeight ?? 0}
+                    marginLeftPct={editorState.textMarginLeft}
+                    marginRightPct={editorState.textMarginRight}
                     fontSize={editorState.fontSize}
+                    lineHeight={editorState.lineHeight ?? 1.4}
                     isSelected={isTextSelected}
                     editable
                     text={text}
                     onTextChange={onTextChange}
                     onSelect={() => setIsTextSelected(true)}
                     onResize={onTextBoxResize}
+                    style={combinedTextStyle}
                 >
                     <div
-                        className="mt-3 text-xl break-words"
-                        style={{ ...dropShadowStyle }}
+                        className="text-xl"
+                        style={{ ...dropShadowStyle, width: '100%' }}
                     >
                         <p style={combinedTextStyle}>{text}</p>
                     </div>

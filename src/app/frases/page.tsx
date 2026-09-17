@@ -1,7 +1,7 @@
 
 
 import { Suspense } from 'react';
-import { getSheetData, getAllQuotes } from '@/lib/dados';
+import { getAllQuotes, buildSheetHierarchy } from '@/lib/dados';
 import { FrasesClientPage } from './frases-client';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -38,42 +38,44 @@ export default async function FrasesPage() {
   // Fetch all quotes and categories from the latest data.
   // The client component will handle all the dynamic filtering.
   const allQuotes = await getAllQuotes(true);
-  // Usa getSheetData para obter a hierarquia completa
-  const sheetData = await getSheetData(true);
+  // Usa buildSheetHierarchy diretamente a partir dos quotes obtidos, evitando chamada redundante
+  const sheetData = buildSheetHierarchy(allQuotes);
 
-  // Extrai as categorias principais e a hierarquia
+  // Extrai apenas as abas da planilha como as categorias principais
   const mainCategories = ['Todos'];
-  const categories: { [mainCategory: string]: string[] } = {};
 
   for (const sheetName in sheetData) {
       if (!mainCategories.includes(sheetName)) {
           mainCategories.push(sheetName);
       }
-      if (!categories[sheetName]) {
-          categories[sheetName] = [];
-      }
-
-      for (const mainCat in sheetData[sheetName]) {
-          if (!mainCategories.includes(mainCat)) {
-              mainCategories.push(mainCat);
-          }
-          if (!categories[mainCat]) {
-              categories[mainCat] = [];
-          }
-          categories[mainCat] = [...new Set([...categories[mainCat], ...sheetData[sheetName][mainCat]])];
-
-          if (!categories[sheetName].includes(mainCat)) {
-              categories[sheetName].push(mainCat);
-          }
-      }
   }
+
+  // Ordenação personalizada: 'Todos' em primeiro, seguido pelas 4 principais específicas.
+  const priorityCategories = ['trends', 'frases', 'phrases', 'dias da semana', 'datas comemorativas'];
+  
+  mainCategories.sort((a, b) => {
+      if (a === 'Todos') return -1;
+      if (b === 'Todos') return 1;
+
+      const indexA = priorityCategories.indexOf(a.toLowerCase());
+      const indexB = priorityCategories.indexOf(b.toLowerCase());
+
+      if (indexA !== -1 && indexB !== -1) {
+          return indexA - indexB;
+      }
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+
+      // Mantém a ordem original do restante alfabeticamente ou conforme vieram
+      return a.localeCompare(b);
+  });
 
   return (
     <Suspense fallback={<FrasesLoadingSkeleton />}>
       <FrasesClientPage
         initialQuotes={allQuotes}
         initialMainCategories={mainCategories}
-        initialSubCategories={categories}
+        initialHierarchy={sheetData}
       />
     </Suspense>
   );

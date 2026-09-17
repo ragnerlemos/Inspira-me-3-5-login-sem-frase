@@ -41,23 +41,76 @@ export function MemeGenerator({
   onCopy
 }: MemeGeneratorProps) {
   const memeRef = useRef<HTMLDivElement>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const [currentText, setCurrentText] = useState<string>(quote?.quote || editorState.text || "");
   const [memeUrl, setMemeUrl] = useState<string | null>(null);
   const [memeFile, setMemeFile] = useState<File | null>(null);
   const [isTextSelected, setIsTextSelected] = useState(false);
   const [isCopyingImage, setIsCopyingImage] = useState(false);
   const [isSharingImage, setIsSharingImage] = useState(false);
+  const [fontSizeMultiplier, setFontSizeMultiplier] = useState<number>(1);
+  const [textBoxWidth, setTextBoxWidth] = useState<number>(editorState.textBoxWidth ?? 80);
+  const [textMarginLeft, setTextMarginLeft] = useState<number | undefined>(editorState.textMarginLeft);
+  const [textMarginRight, setTextMarginRight] = useState<number | undefined>(editorState.textMarginRight);
+  const [lineHeight, setLineHeight] = useState<number>(editorState.lineHeight ?? 1.4);
   const { toast } = useToast();
 
-  const baseTextStyle: EstiloTexto = {
-      fontFamily: editorState.fontFamily,
-      fontSize: `${editorState.fontSize}cqw`,
-      fontWeight: editorState.fontWeight,
-      fontStyle: editorState.fontStyle,
-      color: editorState.textColor,
-      textAlign: editorState.textAlign,
-      lineHeight: editorState.lineHeight,
+  const [isBold, setIsBold] = useState(
+    editorState.fontWeight === 'bold' || 
+    editorState.fontWeight === '700' || 
+    editorState.fontWeight === undefined || 
+    (editorState.fontWeight !== 'normal' && editorState.fontWeight !== '400')
+  );
+  const [isItalic, setIsItalic] = useState(editorState.fontStyle === 'italic');
+
+  const toggleBold = () => {
+    setIsBold(!isBold);
   };
 
+  const toggleItalic = () => {
+    setIsItalic(!isItalic);
+  };
+  
+  const currentEditorState = {
+    ...editorState,
+    text: currentText,
+    fontSize: (editorState.fontSize || 2) * fontSizeMultiplier,
+    textBoxWidth: textBoxWidth,
+    textMarginLeft: textMarginLeft,
+    textMarginRight: textMarginRight,
+    lineHeight: lineHeight,
+    fontWeight: isBold ? 'bold' : 'normal',
+    fontStyle: isItalic ? 'italic' : 'normal',
+  };
+
+  const handleTextBoxResize = ({ widthPct, marginLeftPct, marginRightPct, fontSize, lineHeight: nextLineHeight }: { widthPct?: number; heightPx?: number; marginLeftPct?: number; marginRightPct?: number; fontSize?: number; lineHeight?: number }) => {
+    if (widthPct !== undefined) {
+      setTextBoxWidth(widthPct);
+    }
+    if (marginLeftPct !== undefined) {
+      setTextMarginLeft(marginLeftPct);
+    }
+    if (marginRightPct !== undefined) {
+      setTextMarginRight(marginRightPct);
+    }
+    if (fontSize !== undefined && editorState.fontSize) {
+      setFontSizeMultiplier(fontSize / editorState.fontSize);
+    }
+    if (nextLineHeight !== undefined) {
+      setLineHeight(nextLineHeight);
+    }
+  };
+
+  const baseTextStyle: EstiloTexto = {
+      fontFamily: currentEditorState.fontFamily,
+      fontSize: `${currentEditorState.fontSize}cqw`,
+      fontWeight: currentEditorState.fontWeight || 'normal',
+      fontStyle: currentEditorState.fontStyle || 'normal',
+      color: currentEditorState.textColor,
+      textAlign: currentEditorState.textAlign,
+      lineHeight: currentEditorState.lineHeight,
+  };
+  
   useEffect(() => {
     let active = true;
     const generateAndProcess = async () => {
@@ -65,15 +118,26 @@ export function MemeGenerator({
       
       try {
         await document.fonts.ready;
-        await new Promise(resolve => setTimeout(resolve, 300)); // Aguarda a renderização
+        await new Promise(resolve => setTimeout(resolve, 150)); // Aguarda a renderização
         
         if (!active) return;
 
         const { toJpeg } = await import('html-to-image');
-        const dataUrl = await toJpeg(memeRef.current, {
-            quality: 0.95,
-            pixelRatio: 2,
-            backgroundColor: '#000000'
+        const node = memeRef.current;
+        const rect = node.getBoundingClientRect();
+        
+        const dataUrl = await toJpeg(node, {
+            quality: 1, // Aumentando qualidade
+            pixelRatio: 2, // Ajustando pixel ratio
+            backgroundColor: '#000000',
+            cacheBust: true, // Evitar cache
+            width: rect.width,
+            height: rect.height,
+            style: {
+                transform: 'none', // Forçar transformação normal
+                width: `${rect.width}px`,
+                height: `${rect.height}px`
+            }
         });
         if (!dataUrl) {
             throw new Error("Falha ao gerar a imagem em formato JPEG.");
@@ -151,21 +215,72 @@ export function MemeGenerator({
             URL.revokeObjectURL(memeUrl);
         }
     }
-  }, [shareDirectly, quote, toast, onClose, memeUrl]);
+  }, [shareDirectly, quote, toast, onClose, fontSizeMultiplier, textBoxWidth, lineHeight, currentText]);
+
+  const ensureLatestMeme = async () => {
+    // Captura com prioridade máxima o elemento que o usuário está visualizando exatamente na tela
+    const targetElement = previewContainerRef.current || (typeof document !== 'undefined' ? document.getElementById('meme-preview-image-container') : null) || memeRef.current;
+    if (!targetElement) return { url: memeUrl, file: memeFile, filename: generateFilename({ ...quote, quote: currentText }, 'jpg') };
+
+    // Desmarca a seleção da caixa de texto para não renderizar bordas roxas ou alças de redimensionamento
+    setIsTextSelected(false);
+
+    try {
+      await document.fonts.ready;
+      await new Promise(resolve => setTimeout(resolve, 80));
+
+      const { toJpeg } = await import('html-to-image');
+      const targetWidth = targetElement.clientWidth || 340;
+      // Proporção de alta resolução (1080px de largura) mantendo 100% fiel a diagramação e quebra de linhas do que está na tela
+      const pixelRatio = Math.max(2, Math.round(1080 / targetWidth));
+
+      const dataUrl = await toJpeg(targetElement, {
+          quality: 0.98,
+          pixelRatio: pixelRatio,
+          backgroundColor: '#000000',
+          cacheBust: true,
+          width: targetElement.getBoundingClientRect().width,
+          height: targetElement.getBoundingClientRect().height,
+          filter: (node) => {
+              if (node instanceof HTMLElement && (node.classList?.contains('export-ignore') || node.getAttribute('aria-label') === 'Fechar')) {
+                  return false;
+              }
+              return true;
+          },
+          style: {
+              borderRadius: '0px',
+              transform: 'none',
+              width: `${targetElement.getBoundingClientRect().width}px`,
+              height: `${targetElement.getBoundingClientRect().height}px`
+          }
+      });
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const filename = generateFilename({ ...quote, quote: currentText }, 'jpg');
+      const fileObj = new File([blob], filename, { type: 'image/jpeg' });
+      const newUrl = URL.createObjectURL(blob);
+      setMemeFile(fileObj);
+      setMemeUrl(newUrl);
+      return { url: newUrl, file: fileObj, blob, filename };
+    } catch (e) {
+      console.error("Erro ao gerar imagem recente:", e);
+      return { url: memeUrl, file: memeFile, filename: generateFilename({ ...quote, quote: currentText }, 'jpg') };
+    }
+  };
 
   const handleShareImageClick = async () => {
-    if (!memeFile) return;
     setIsSharingImage(true);
     try {
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [memeFile] })) {
+      const latest = await ensureLatestMeme();
+      const fileToShare = latest.file || memeFile;
+      if (fileToShare && navigator.share && navigator.canShare && navigator.canShare({ files: [fileToShare] })) {
         await navigator.share({
-          files: [memeFile],
+          files: [fileToShare],
         });
-        onClose();
       } else {
         toast({
           title: "Compartilhamento não suportado",
-          description: "Seu navegador não suporta compartilhamento de arquivos. Por favor, utilize a opção de Baixar ou Copiar.",
+          description: "Seu navegador não suporta compartilhamento direto de arquivos. Por favor, utilize a opção de Baixar ou Copiar.",
         });
       }
     } catch (err) {
@@ -185,11 +300,14 @@ export function MemeGenerator({
   };
 
   const handleCopyImageClick = async () => {
-    if (!memeUrl) return;
     setIsCopyingImage(true);
     try {
-      const response = await fetch(memeUrl);
-      const blob = await response.blob();
+      const latest = await ensureLatestMeme();
+      const activeBlob = latest.blob;
+      const blobToProcess = activeBlob || (memeUrl ? await (await fetch(memeUrl)).blob() : null);
+      if (!blobToProcess) {
+        throw new Error("Imagem não encontrada para cópia.");
+      }
       
       if (navigator.clipboard && window.isSecureContext) {
         // Converte o jpeg/blob para png para maximizar compatibilidade com a área de transferência do sistema
@@ -214,7 +332,7 @@ export function MemeGenerator({
                 }, 'image/png');
             };
             img.onerror = () => reject(new Error("Erro ao carregar imagem para conversão"));
-            img.src = URL.createObjectURL(blob);
+            img.src = URL.createObjectURL(blobToProcess);
         });
 
         await navigator.clipboard.write([
@@ -227,7 +345,6 @@ export function MemeGenerator({
           title: 'Imagem Copiada!', 
           description: 'A imagem foi copiada para a sua área de transferência com sucesso.' 
         });
-        onClose();
       } else {
         throw new Error("API de Área de Transferência não disponível ou contexto não seguro.");
       }
@@ -244,13 +361,15 @@ export function MemeGenerator({
   };
 
   const handleDownloadClick = async () => {
-    if (!memeUrl) return;
+    const latest = await ensureLatestMeme();
+    const activeUrl = latest.url || memeUrl;
+    if (!activeUrl) return;
     
-    const filename = generateFilename(quote, 'jpg');
+    const filename = latest.filename || generateFilename({ ...quote, quote: currentText }, 'jpg');
 
     if (Capacitor.isNativePlatform()) {
       try {
-        const response = await fetch(memeUrl);
+        const response = await fetch(activeUrl);
         const blob = await response.blob();
         const reader = new FileReader();
         reader.readAsDataURL(blob);
@@ -265,25 +384,22 @@ export function MemeGenerator({
               toast({ variant: 'destructive', title: 'Erro ao salvar', description: 'Não foi possível salvar a imagem.' });
             }
           }
-          onClose();
         };
       } catch (err) {
         console.error("Erro ao converter blob nativamente:", err);
         toast({ variant: 'destructive', title: 'Erro de download', description: 'Ocorreu um erro ao baixar a imagem.' });
-        onClose();
       }
       return;
     }
 
     const link = document.createElement('a');
-    link.href = memeUrl;
+    link.href = activeUrl;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
     toast({ title: 'Sucesso!', description: `Seu meme foi baixado como ${filename}.` });
-    onClose();
   };
 
   const isSharingSupported = !!(memeFile && typeof window !== 'undefined' && navigator.share);
@@ -312,15 +428,36 @@ export function MemeGenerator({
 
   // Renderiza a pré-visualização para download
   return (
-    <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4" onClick={onClose}>
-        <div className="relative w-full max-w-sm sm:max-w-md mx-auto" onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" onClick={onClose} className="absolute right-3 top-3 z-50 text-white bg-transparent hover:bg-white/5" aria-label="Fechar">
-              <X className="h-5 w-5" />
-            </Button>
-            <div className="flex flex-col items-center gap-4 bg-[#020817]/95 border border-slate-800 p-6 rounded-2xl">
+    <div className="fixed inset-0 bg-black/85 z-[100] flex items-center justify-center p-1 sm:p-2" onClick={onClose}>
+        <div className="relative w-full max-w-md sm:max-w-xl mx-auto h-[96vh] sm:h-auto flex flex-col justify-center" onClick={(e) => e.stopPropagation()}>
+            <div className="relative flex flex-col items-center gap-2 bg-[#27272a] border border-zinc-700 p-3 sm:p-4 rounded-2xl shadow-2xl w-full" onPointerDown={() => setIsTextSelected(false)}>
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={onClose} 
+                    className="absolute right-3 top-3 z-50 text-zinc-400 hover:text-white bg-zinc-800/80 hover:bg-zinc-700 rounded-full h-7 w-7 flex items-center justify-center transition-colors" 
+                    aria-label="Fechar"
+                >
+                    <X className="h-4 w-4" />
+                </Button>
                 <MemePreview 
+                    previewContainerRef={previewContainerRef}
                     memeUrl={memeUrl} 
+                    editorState={currentEditorState}
+                    profile={profile}
+                    baseTextStyle={baseTextStyle}
+                    isTextSelected={isTextSelected}
+                    setIsTextSelected={setIsTextSelected}
+                    onTextBoxResize={handleTextBoxResize}
+                    text={currentText}
+                    onTextChange={setCurrentText}
                     onDownload={handleDownloadClick} 
+                    fontSizeMultiplier={fontSizeMultiplier}
+                    onFontSizeChange={setFontSizeMultiplier}
+                    textBoxWidth={textBoxWidth}
+                    onTextBoxWidthChange={setTextBoxWidth}
+                    onToggleBold={toggleBold}
+                    onToggleItalic={toggleItalic}
                 />
                 
                 {memeUrl && (
@@ -331,21 +468,21 @@ export function MemeGenerator({
                         onShare={handleShareImageClick}
                         onDownload={handleDownloadClick}
                         onCopy={handleCopyImageClick}
+                        onClose={onClose}
                         disabled={isCopyingImage || isSharingImage}
                     />
                 )}
             </div>
             
             <MemeHiddenRenderer 
-                memeRef={memeRef}
-                editorState={editorState}
+                memeRef={memeRef} 
+                editorState={currentEditorState}
                 profile={profile}
                 baseTextStyle={baseTextStyle}
-                isTextSelected={isTextSelected}
-                setIsTextSelected={setIsTextSelected}
+                isTextSelected={false}
+                setIsTextSelected={() => {}}
             />
         </div>
     </div>
   );
 }
-

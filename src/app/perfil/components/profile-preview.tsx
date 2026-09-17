@@ -49,7 +49,7 @@ export function ProfilePreview({ profile, onProfileChange }: ProfilePreviewProps
                         <AvatarImage src={profile.photo || ''} alt={profile.username} />
                         <AvatarFallback><User /></AvatarFallback>
                     </Avatar>
-                    <h2 className="text-2xl font-bold mt-4 font-headline">{profile.username}</h2>
+                    <h2 className="text-2xl font-bold mt-4 font-headline whitespace-nowrap">{profile.username}</h2>
                     <p className="text-muted-foreground">{profile.social}</p>
 
                     <div className="mt-6 border-t pt-4">
@@ -63,7 +63,7 @@ export function ProfilePreview({ profile, onProfileChange }: ProfilePreviewProps
                                     <div className="flex-1">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="font-bold">{profile.username}</p>
+                                                <p className="font-bold whitespace-nowrap">{profile.username}</p>
                                                 <p className="text-sm text-muted-foreground">{profile.social}</p>
                                             </div>
                                             <div className="flex items-center">

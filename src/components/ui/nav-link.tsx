@@ -17,19 +17,25 @@ interface NavLinkProps {
 // Componente para os links de navegação principais, com ícone e texto.
 export function NavLink({ href, icon: Icon, label, onClick }: NavLinkProps) {
   const pathname = usePathname();
-  const isActive = pathname === href;
+  const isActive = pathname === href || (href === "/frases" && pathname === "/");
 
   return (
     <Link
       href={href}
+      prefetch={true}
       className={cn(
         buttonVariants({ variant: isActive ? "secondary" : "ghost", size: "sm" }),
-        "justify-start"
+        "justify-start transition-all duration-150 active:scale-95 select-none font-medium"
       )}
-      onClick={onClick} // Passa o onClick para o componente Link
+      onClick={(e) => {
+        if (isActive && !href.includes("?")) {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+        onClick?.();
+      }}
     >
-      <Icon className="mr-2 h-4 w-4 text-[var(--theme-menu-icon-color)]" />
-      {label}
+      <Icon className="mr-2 h-4 w-4 text-[var(--theme-menu-icon-color)] shrink-0" />
+      <span>{label}</span>
     </Link>
   );
 }

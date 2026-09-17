@@ -220,11 +220,11 @@ export function ControleTipoFundo({
 
     return (
         <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
-                <Button variant={activeTab === 'media' ? "secondary" : "ghost"} onClick={() => handleTabChange('media')}><ImageIcon className="mr-2 h-4 w-4" /> Mídia</Button>
-                <Button variant={activeTab === 'solid' ? "secondary" : "ghost"} onClick={() => handleTabChange('solid')}><Palette className="mr-2 h-4 w-4" /> Cor</Button>
-                <Button variant={activeTab === 'gradient' ? "secondary" : "ghost"} onClick={() => handleTabChange('gradient')}><Layers className="mr-2 h-4 w-4" /> Gradiente</Button>
-                <Button variant={activeTab === 'vignette' ? "secondary" : "ghost"} onClick={() => handleTabChange('vignette')}><div className="w-4 h-4 mr-2 rounded-sm bg-gradient-to-t from-black/60 to-transparent border border-current/50" /> Vinheta</Button>
+            <div className="grid grid-cols-4 gap-1">
+                <Button variant={activeTab === 'media' ? "secondary" : "ghost"} onClick={() => handleTabChange('media')} className="px-1 py-1 text-xs h-9 font-medium"><ImageIcon className="mr-1 h-3.5 w-3.5 shrink-0" /> Mídia</Button>
+                <Button variant={activeTab === 'solid' ? "secondary" : "ghost"} onClick={() => handleTabChange('solid')} className="px-1 py-1 text-xs h-9 font-medium"><Palette className="mr-1 h-3.5 w-3.5 shrink-0" /> Cor</Button>
+                <Button variant={activeTab === 'gradient' ? "secondary" : "ghost"} onClick={() => handleTabChange('gradient')} className="px-1 py-1 text-xs h-9 font-medium"><Layers className="mr-1 h-3.5 w-3.5 shrink-0" /> Gradiente</Button>
+                <Button variant={activeTab === 'vignette' ? "secondary" : "ghost"} onClick={() => handleTabChange('vignette')} className="px-1 py-1 text-xs h-9 font-medium"><div className="w-3.5 h-3.5 mr-1 rounded-sm bg-gradient-to-t from-black/60 to-transparent border border-current/50 shrink-0" /> Vinheta</Button>
             </div>
             
             <Separator />

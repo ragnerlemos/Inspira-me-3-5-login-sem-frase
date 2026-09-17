@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useTransition, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, FileSpreadsheet } from 'lucide-react';
 import { useWindowSize } from 'react-use';
@@ -22,14 +22,16 @@ import { Clipboard } from '@capacitor/clipboard';
 import { App } from '@capacitor/app';
 // import { toJpeg } from 'html-to-image';
 import { useProfile } from '@/hooks/use-profile';
+import { useTemplates } from '@/hooks/use-templates';
 import type { EditorState } from '../editor-de-video/tipos';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MemeGenerator } from '@/components/meme-generator';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { MobileCategorySheet } from './components/mobile-category-sheet';
 import { QuotesGrid } from './components/quotes-grid';
 import { QuotesEmptyState } from './components/quotes-empty-state';
 
-import { FrasesClientPageProps, QuoteWithAuthor } from './types';
+import { FrasesClientPageProps, QuoteWithAuthor, GlobalSubCategory } from './types';
 import { getMemeEditorState } from './utils';
 import { FrasesHeader } from './components/frases-header';
 import { FrasesSidebar } from './components/frases-sidebar';
@@ -39,7 +41,7 @@ import { QuoteSkeleton } from './components/quote-skeleton';
 export function FrasesClientPage({
   initialQuotes,
   initialMainCategories,
-  initialSubCategories,
+  initialHierarchy,
   pageTitle = "Inspire-se com Frases",
 }: FrasesClientPageProps) {
   const [allQuotes, setAllQuotes] = useState<QuoteWithAuthor[]>(initialQuotes);
@@ -47,13 +49,31 @@ export function FrasesClientPage({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
+  const [, startTransition] = useTransition();
   const [selectedMainCategory, setSelectedMainCategory] = useState<string>('Todos');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
+  const [selectedSubSubCategory, setSelectedSubSubCategory] = useState<string>('Todos');
   const [isCategorySheetOpen, setIsCategorySheetOpen] = useState(false);
+  const [highlightedQuoteId, setHighlightedQuoteId] = useState<string | null>(null);
+  const [quoteToDelete, setQuoteToDelete] = useState<QuoteWithAuthor | null>(null);
   const [sortBy, setSortBy] = useState<'recentes' | 'aleatorias' | 'antigas'>('recentes');
   const [randomSeed, setRandomSeed] = useState<number>(0);
   
-  const [quoteForMeme, setQuoteForMeme] = useState<{ quote: QuoteWithAuthor; action: 'preview' | 'share'; } | null>(null);
+  const { templates } = useTemplates();
+  const layouts = templates.filter(t => !t.isCustom);
+  const backgrounds = templates.filter(t => t.isCustom);
+
+  const [globalLayoutId, setGlobalLayoutId] = useState<string>('template-twitter');
+  const [globalBackgroundId, setGlobalBackgroundId] = useState<string>('');
+  
+  const handleSelectLayout = useCallback((quoteId: string, templateId: string) => {
+    setGlobalLayoutId(templateId);
+  }, []);
+  const handleSelectBackground = useCallback((quoteId: string, templateId: string) => {
+    setGlobalBackgroundId(templateId);
+  }, []);
+  
+  const [quoteForMeme, setQuoteForMeme] = useState<{ quote: QuoteWithAuthor; action: 'preview' | 'share'; layoutId?: string; backgroundId?: string } | null>(null);
 
   const { favorites, toggleFavorite } = useFavorites();
   const { hiddenQuotes, hideQuote } = useHiddenQuotes();
@@ -70,7 +90,57 @@ export function FrasesClientPage({
 
   const isAdmin = currentUser?.email === 'efeitosbd@gmail.com';
 
-  const handleGlobalDelete = async (quote: QuoteWithAuthor) => {
+  const handleQuickEditQuote = async (quote: QuoteWithAuthor, newText: string): Promise<boolean> => {
+    try {
+      const user = auth.currentUser;
+      const token = user ? await user.getIdToken() : '';
+
+      const res = await fetchWithBase('/api/admin/update-quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          quoteId: quote.id,
+          sheetName: quote.sheetName,
+          rowNumber: quote.rowNumber,
+          quote: newText,
+          author: quote.author || '',
+          category: quote.category || '',
+          subCategory: quote.subCategory || '',
+          intro: quote.intro || '',
+          conclusion: quote.conclusion || '',
+          description: quote.description || '',
+          music: quote.music || ''
+        })
+      });
+
+      if (res.ok) {
+        toast({
+          title: "Frase atualizada com sucesso!",
+          description: "O card foi atualizado na tela e na planilha."
+        });
+
+        // Atualiza imediatamente no estado local
+        setAllQuotes(prev => prev.map(q => q.id === quote.id ? { ...q, quote: newText } : q));
+        return true;
+      } else {
+        const err = await res.json();
+        throw new Error(err.error || "Erro ao atualizar frase.");
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        title: "Erro ao salvar alteração",
+        description: error.message || "Não foi possível atualizar a frase.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const handleGlobalDelete = (quote: QuoteWithAuthor) => {
     if (!isAdmin) return;
     
     if (!quote.hasId || !quote.sheetName) {
@@ -82,9 +152,13 @@ export function FrasesClientPage({
       return;
     }
 
-    if (!confirm(`Tem certeza que deseja excluir esta frase permanentemente do banco de dados?\n\n"${quote.quote}"\n\nIsso afetará todos os usuários.`)) {
-      return;
-    }
+    setQuoteToDelete(quote);
+  };
+
+  const executeGlobalDelete = async () => {
+    if (!quoteToDelete) return;
+    const quote = quoteToDelete;
+    setQuoteToDelete(null);
 
     try {
       const token = await currentUser?.getIdToken();
@@ -98,7 +172,8 @@ export function FrasesClientPage({
         },
         body: JSON.stringify({
           quoteId: quote.id,
-          sheetName: quote.sheetName
+          sheetName: quote.sheetName,
+          rowNumber: quote.rowNumber
         })
       });
 
@@ -212,13 +287,81 @@ export function FrasesClientPage({
   useEffect(() => {
     const mainCatFromUrl = searchParams.get('mainCategory');
     const subCatFromUrl = searchParams.get('subCategory');
+    const subSubCatFromUrl = searchParams.get('subSubCategory');
     if (mainCatFromUrl) {
       setSelectedMainCategory(mainCatFromUrl);
     }
     if (subCatFromUrl) {
       setSelectedSubCategory(subCatFromUrl);
     }
+    if (subSubCatFromUrl) {
+      setSelectedSubSubCategory(subSubCatFromUrl);
+    }
   }, [searchParams]);
+
+  // Efeito para recarregar dados frescos se veio de cadastro recente via sessionStorage
+  useEffect(() => {
+    try {
+      const lastAddedStr = sessionStorage.getItem('inspire_last_added_quote');
+      if (lastAddedStr) {
+        sessionStorage.removeItem('inspire_last_added_quote');
+        handleRefreshQuotes(true);
+      }
+    } catch {}
+  }, []);
+
+  // Efeito para destacar e rolar a tela até o card da frase recém-adicionada ou indicada na URL
+  useEffect(() => {
+    const highlight = searchParams.get('highlight');
+    const quoteQuery = searchParams.get('q');
+    if (!highlight && !quoteQuery) return;
+
+    if (allQuotes.length === 0) return;
+
+    const target = allQuotes.find(q => {
+      if (highlight) {
+        if (q.id === highlight) return true;
+        if (q.id.endsWith(`-${highlight}`)) return true;
+        if (String(q.id).toLowerCase() === String(highlight).toLowerCase()) return true;
+      }
+      if (quoteQuery && q.quote.toLowerCase().includes(quoteQuery.toLowerCase().trim())) {
+        return true;
+      }
+      return false;
+    });
+
+    if (!target && (highlight || quoteQuery)) {
+      handleRefreshQuotes(true);
+      return;
+    }
+
+    if (target) {
+      setHighlightedQuoteId(target.id);
+
+      // Se a frase pertence a uma aba específica e o filtro atual não a exibe, ajusta a aba
+      if (target.sheetName && selectedMainCategory !== 'Todos' && selectedMainCategory !== target.sheetName) {
+        setSelectedMainCategory(target.sheetName);
+      }
+
+      // Scroll suave até o elemento
+      const scrollTimer = setTimeout(() => {
+        const el = document.getElementById(`quote-card-${target.id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 400);
+
+      // Desliga o destaque depois de 8 segundos
+      const unhighlightTimer = setTimeout(() => {
+        setHighlightedQuoteId(null);
+      }, 8000);
+
+      return () => {
+        clearTimeout(scrollTimer);
+        clearTimeout(unhighlightTimer);
+      };
+    }
+  }, [allQuotes, searchParams, selectedMainCategory]);
   
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -229,17 +372,13 @@ export function FrasesClientPage({
     visibleQuotes.forEach((q) => {
       if (q.sheetName) {
         counts[q.sheetName] = (counts[q.sheetName] || 0) + 1;
-      }
-      if (q.category && q.category !== q.sheetName) {
-        counts[q.category] = (counts[q.category] || 0) + 1;
-      }
-      if (q.subCategory) {
-        counts[q.subCategory] = (counts[q.subCategory] || 0) + 1;
-        if (q.sheetName) {
-          counts[`${q.sheetName}-${q.subCategory}`] = (counts[`${q.sheetName}-${q.subCategory}`] || 0) + 1;
-        }
+        
+        const cat1 = q.subCategory?.trim() || 'Geral';
+        counts[`${q.sheetName}-${cat1}`] = (counts[`${q.sheetName}-${cat1}`] || 0) + 1;
+
         if (q.category) {
-          counts[`${q.category}-${q.subCategory}`] = (counts[`${q.category}-${q.subCategory}`] || 0) + 1;
+          const cat2 = q.category.trim();
+          counts[`${q.sheetName}-${cat1}-${cat2}`] = (counts[`${q.sheetName}-${cat1}-${cat2}`] || 0) + 1;
         }
       }
     });
@@ -247,26 +386,145 @@ export function FrasesClientPage({
     return counts;
   }, [allQuotes, hiddenQuotes, isAdmin]);
 
+  const globalSubCategories = useMemo<GlobalSubCategory[]>(() => {
+    const visibleQuotes = isAdmin ? allQuotes.filter(q => !hiddenQuotes.includes(q.id)) : allQuotes;
+
+    const subMap = new Map<string, { displayName: string; quotes: QuoteWithAuthor[] }>();
+
+    visibleQuotes.forEach((q) => {
+      const catsInQuote = new Set<string>();
+      if (q.subCategory?.trim() && q.subCategory.trim().toLowerCase() !== 'geral') {
+        catsInQuote.add(q.subCategory.trim());
+      }
+      if (q.category?.trim() && q.category.trim().toLowerCase() !== 'geral') {
+        catsInQuote.add(q.category.trim());
+      }
+
+      catsInQuote.forEach((rawCat) => {
+        const normKey = rawCat.toLowerCase();
+        if (!subMap.has(normKey)) {
+          const formatted = rawCat.charAt(0).toUpperCase() + rawCat.slice(1);
+          subMap.set(normKey, { displayName: formatted, quotes: [] });
+        }
+        subMap.get(normKey)!.quotes.push(q);
+      });
+    });
+
+    const result: GlobalSubCategory[] = [];
+
+    subMap.forEach(({ displayName, quotes }, normalizedKey) => {
+      const contextMap = new Map<string, { name: string; count: number }>();
+
+      quotes.forEach((q) => {
+        const cat1 = q.subCategory?.trim() || '';
+        const cat2 = q.category?.trim() || '';
+        const norm1 = cat1.toLowerCase();
+        const norm2 = cat2.toLowerCase();
+
+        let ctxName = '';
+
+        if (q.sheetName === 'Datas Comemorativas') {
+          const other = norm1 === normalizedKey ? cat2 : cat1;
+          if (other && other.toLowerCase() !== normalizedKey && other.toLowerCase() !== 'geral') {
+            ctxName = other;
+          } else {
+            ctxName = 'Datas Comemorativas';
+          }
+        } else {
+          const other = norm1 === normalizedKey ? cat2 : cat1;
+          if (other && other.toLowerCase() !== normalizedKey && other.toLowerCase() !== 'geral') {
+            ctxName = other;
+          } else {
+            ctxName = q.sheetName || 'Outros';
+          }
+        }
+
+        if (ctxName) {
+          const ctxKey = ctxName.toLowerCase();
+          const formattedCtx = ctxName.charAt(0).toUpperCase() + ctxName.slice(1);
+          if (!contextMap.has(ctxKey)) {
+            contextMap.set(ctxKey, { name: formattedCtx, count: 0 });
+          }
+          contextMap.get(ctxKey)!.count += 1;
+        }
+      });
+
+      const contexts = Array.from(contextMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+
+      result.push({
+        name: displayName,
+        normalizedKey,
+        totalCount: quotes.length,
+        contexts
+      });
+    });
+
+    return result.sort((a, b) => a.name.localeCompare(b.name));
+  }, [allQuotes, hiddenQuotes, isAdmin]);
+
   const filteredQuotes = useMemo(() => {
     let quotes = allQuotes;
 
-    if (selectedMainCategory !== 'Todos') {
-      quotes = quotes.filter(
-        q => q.sheetName === selectedMainCategory || q.category === selectedMainCategory || q.subCategory === selectedMainCategory
-      );
+    if (selectedMainCategory && selectedMainCategory.toLowerCase() !== 'todos') {
+      const targetMainLower = selectedMainCategory.toLowerCase().trim();
+      quotes = quotes.filter(q => {
+        const sheetMatch = q.sheetName && q.sheetName.toLowerCase().trim() === targetMainLower;
+        const catMatch = (q.category && q.category.toLowerCase().trim() === targetMainLower) ||
+                         (q.subCategory && q.subCategory.toLowerCase().trim() === targetMainLower);
+        return sheetMatch || catMatch;
+      });
     }
 
-    if (selectedSubCategory !== 'Todos') {
-      quotes = quotes.filter(
-        q => q.category === selectedSubCategory || q.subCategory === selectedSubCategory
-      );
+    if (selectedSubCategory.toLowerCase().trim() !== 'todos') {
+      const targetSubLower = selectedSubCategory.toLowerCase().trim();
+
+      quotes = quotes.filter(q => {
+        const cat1 = q.subCategory?.trim() || '';
+        const cat2 = q.category?.trim() || '';
+        const norm1 = cat1.toLowerCase();
+        const norm2 = cat2.toLowerCase();
+
+        const hasSub = norm1 === targetSubLower || norm2 === targetSubLower;
+        if (!hasSub) return false;
+
+        if (selectedSubSubCategory.toLowerCase().trim() !== 'todos') {
+          const targetCtxLower = selectedSubSubCategory.toLowerCase().trim();
+
+          let ctxName = '';
+          if (q.sheetName === 'Datas Comemorativas') {
+            const other = norm1 === targetSubLower ? cat2 : cat1;
+            if (other && other.toLowerCase() !== targetSubLower && other.toLowerCase() !== 'geral') {
+              ctxName = other;
+            } else {
+              ctxName = 'Datas Comemorativas';
+            }
+          } else {
+            const other = norm1 === targetSubLower ? cat2 : cat1;
+            if (other && other.toLowerCase() !== targetSubLower && other.toLowerCase() !== 'geral') {
+              ctxName = other;
+            } else {
+              ctxName = q.sheetName || 'Outros';
+            }
+          }
+
+          return ctxName.toLowerCase() === targetCtxLower;
+        }
+
+        return true;
+      });
     }
 
     if (searchTerm) {
-      const lowercasedTerm = searchTerm.toLowerCase();
+      const lowercasedTerm = searchTerm.toLowerCase().trim();
+      const cleanTermNumber = lowercasedTerm.replace(/^#/, '');
       quotes = quotes.filter(q => 
           q.quote.toLowerCase().includes(lowercasedTerm) ||
-          (q.author && q.author.toLowerCase().includes(lowercasedTerm))
+          (q.author && q.author.toLowerCase().includes(lowercasedTerm)) ||
+          (q.category && q.category.toLowerCase().includes(lowercasedTerm)) ||
+          (q.subCategory && q.subCategory.toLowerCase().includes(lowercasedTerm)) ||
+          (q.sheetName && q.sheetName.toLowerCase().includes(lowercasedTerm)) ||
+          (q.id && q.id.toLowerCase().includes(lowercasedTerm)) ||
+          (cleanTermNumber && q.rowNumber !== undefined && q.rowNumber.toString() === cleanTermNumber)
       );
     }
     
@@ -276,26 +534,56 @@ export function FrasesClientPage({
     }
     
     // Sort implementation based on the selected criteria
+    const parseDateTimeToTimestamp = (dateStr?: string, timeStr?: string): number => {
+      if (!dateStr && !timeStr) return 0;
+      let y = 0, m = 0, d = 0;
+      if (dateStr) {
+        const cleanDate = dateStr.trim();
+        if (cleanDate.includes('-')) {
+          const parts = cleanDate.split('-');
+          if (parts.length === 3) {
+            y = parseInt(parts[0], 10) || 0;
+            m = parseInt(parts[1], 10) || 0;
+            d = parseInt(parts[2], 10) || 0;
+          }
+        } else if (cleanDate.includes('/')) {
+          const parts = cleanDate.split('/');
+          if (parts.length === 3) {
+            d = parseInt(parts[0], 10) || 0;
+            m = parseInt(parts[1], 10) || 0;
+            y = parseInt(parts[2], 10) || 0;
+          }
+        }
+      }
+      let hh = 0, mm = 0, ss = 0;
+      if (timeStr) {
+        const timeParts = timeStr.trim().split(':');
+        hh = parseInt(timeParts[0], 10) || 0;
+        mm = parseInt(timeParts[1], 10) || 0;
+        ss = parseInt(timeParts[2], 10) || 0;
+      }
+      if (y > 0 && m > 0 && d > 0) {
+        return new Date(y, m - 1, d, hh, mm, ss).getTime();
+      }
+      return 0;
+    };
+
     const items = [...quotes];
     if (sortBy === 'recentes') {
       items.sort((a, b) => {
-        if (a.date && b.date) {
-          if (a.date !== b.date) return b.date.localeCompare(a.date);
-          if (a.time && b.time) return b.time.localeCompare(a.time);
-        }
-        const rowA = a.rowNumber ?? 0;
-        const rowB = b.rowNumber ?? 0;
-        return rowB - rowA;
+        const timeA = parseDateTimeToTimestamp(a.date, a.time);
+        const timeB = parseDateTimeToTimestamp(b.date, b.time);
+        if (timeA !== timeB) return timeB - timeA;
+        
+        return (b.rowNumber ?? 0) - (a.rowNumber ?? 0);
       });
     } else if (sortBy === 'antigas') {
       items.sort((a, b) => {
-        if (a.date && b.date) {
-          if (a.date !== b.date) return a.date.localeCompare(b.date);
-          if (a.time && b.time) return a.time.localeCompare(b.time);
-        }
-        const rowA = a.rowNumber ?? 0;
-        const rowB = b.rowNumber ?? 0;
-        return rowA - rowB;
+        const timeA = parseDateTimeToTimestamp(a.date, a.time);
+        const timeB = parseDateTimeToTimestamp(b.date, b.time);
+        if (timeA !== timeB) return timeA - timeB;
+        
+        return (a.rowNumber ?? 0) - (b.rowNumber ?? 0);
       });
     } else if (sortBy === 'aleatorias') {
       const rands = new Map<string, number>();
@@ -312,17 +600,16 @@ export function FrasesClientPage({
 
     return items;
 
-  }, [allQuotes, searchTerm, selectedMainCategory, selectedSubCategory, sortBy, randomSeed, hiddenQuotes, isAdmin]);
+  }, [allQuotes, searchTerm, selectedMainCategory, selectedSubCategory, selectedSubSubCategory, sortBy, randomSeed, hiddenQuotes, isAdmin]);
 
   
-  const handleShareMeme = (quote: QuoteWithAuthor) => {
-    setQuoteForMeme({ quote, action: 'share' });
-  };
+  const handleShareMeme = useCallback((quote: QuoteWithAuthor, layoutId?: string, backgroundId?: string) => {
+    setQuoteForMeme({ quote, action: 'share', layoutId, backgroundId });
+  }, []);
 
-
-  const handlePreviewMeme = (quote: QuoteWithAuthor) => {
-    setQuoteForMeme({ quote, action: 'preview' });
-  };
+  const handlePreviewMeme = useCallback((quote: QuoteWithAuthor, layoutId?: string, backgroundId?: string) => {
+    setQuoteForMeme({ quote, action: 'preview', layoutId, backgroundId });
+  }, []);
   
   const handleCopy = async (text: string, author?: string) => {
     const textToCopy = author ? `${text} - ${author}` : text;
@@ -402,33 +689,116 @@ export function FrasesClientPage({
   };
 
   const handleMainCategorySelect = (mainCategory: string) => {
-    setSelectedMainCategory(mainCategory);
-    setSelectedSubCategory('Todos');
-    
-    if (mainCategory === 'Todos' && window.innerWidth < 768) {
+    const isMain = initialMainCategories.some(c => c.toLowerCase().trim() === mainCategory.toLowerCase().trim());
+    if (!isMain && mainCategory.toLowerCase().trim() !== 'todos') {
+      setSelectedMainCategory('Todos');
+      setSelectedSubCategory(mainCategory);
+      setSelectedSubSubCategory('Todos');
+      return;
+    }
+    const canonicalMain = mainCategory.toLowerCase().trim() === 'todos'
+      ? 'Todos'
+      : (initialMainCategories.find(c => c.toLowerCase().trim() === mainCategory.toLowerCase().trim()) || mainCategory);
+
+    // Verifica se a categoria possui subcategorias
+    const matchingKey = canonicalMain !== 'Todos'
+      ? Object.keys(initialHierarchy).find(k => k.toLowerCase().trim() === canonicalMain.toLowerCase().trim())
+      : undefined;
+    const subCategories = matchingKey && initialHierarchy[matchingKey]
+      ? Object.keys(initialHierarchy[matchingKey]).filter(s => s && s.trim() && s.toLowerCase().trim() !== 'geral')
+      : [];
+
+    // Só fecha a gaveta no mobile se NÃO houver subcategorias para o usuário escolher.
+    // Se houver subcategorias, mantém o menu aberto para que ele possa escolher os submenus!
+    if (subCategories.length === 0 && typeof window !== 'undefined' && window.innerWidth < 768) {
       setIsCategorySheetOpen(false);
+    }
+
+    setSelectedMainCategory(canonicalMain);
+    setSelectedSubCategory('Todos');
+    setSelectedSubSubCategory('Todos');
+  };
+
+  const handleCardCategoryClick = (category: string) => {
+    if (isCategorySheetOpen) {
+      setIsCategorySheetOpen(false);
+    }
+    const isMain = initialMainCategories.some(c => c.toLowerCase().trim() === category.toLowerCase().trim());
+    if (isMain) {
+      const canonicalMain = initialMainCategories.find(c => c.toLowerCase().trim() === category.toLowerCase().trim()) || category;
+      setSelectedMainCategory(canonicalMain);
+      setSelectedSubCategory('Todos');
+      setSelectedSubSubCategory('Todos');
+    } else {
+      setSelectedMainCategory('Todos');
+      setSelectedSubCategory(category);
+      setSelectedSubSubCategory('Todos');
     }
   };
 
   const handleSubCategorySelect = (mainCategory: string, subCategory: string) => {
-    setSelectedMainCategory(mainCategory);
-    setSelectedSubCategory(subCategory);
-    if (window.innerWidth < 768) {
+    const canonicalMain = mainCategory.toLowerCase().trim() === 'todos'
+      ? 'Todos'
+      : (initialMainCategories.find(c => c.toLowerCase().trim() === mainCategory.toLowerCase().trim()) || mainCategory);
+
+    // Verificar se a subcategoria possui sub-subcategorias (subopções para o usuário escolher)
+    let hasChildren = false;
+    if (canonicalMain !== 'Todos') {
+      const matchingMain = Object.keys(initialHierarchy).find(k => k.toLowerCase().trim() === canonicalMain.toLowerCase().trim());
+      if (matchingMain && initialHierarchy[matchingMain]) {
+        const matchingSub = Object.keys(initialHierarchy[matchingMain]).find(s => s.toLowerCase().trim() === subCategory.toLowerCase().trim());
+        if (matchingSub && initialHierarchy[matchingMain][matchingSub]?.length > 0) {
+          hasChildren = true;
+        }
+      }
+    } else {
+      const globalItem = globalSubCategories.find(g => g.normalizedKey === subCategory.toLowerCase().trim());
+      if (globalItem && globalItem.contexts && globalItem.contexts.length > 0) {
+        hasChildren = true;
+      }
+    }
+
+    // Se NÃO houver subníveis a escolher, fecha o menu no mobile para exibir as frases.
+    // Se houver opções de submenus, mantém o menu aberto!
+    if (!hasChildren && typeof window !== 'undefined' && window.innerWidth < 768) {
       setIsCategorySheetOpen(false);
     }
+
+    setSelectedMainCategory(canonicalMain);
+    setSelectedSubCategory(subCategory);
+    setSelectedSubSubCategory('Todos');
+  };
+
+  const handleSubSubCategorySelect = (mainCategory: string, subCategory: string, subSubCategory: string) => {
+    const canonicalMain = mainCategory.toLowerCase().trim() === 'todos'
+      ? 'Todos'
+      : (initialMainCategories.find(c => c.toLowerCase().trim() === mainCategory.toLowerCase().trim()) || mainCategory);
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setIsCategorySheetOpen(false);
+    }
+    setSelectedMainCategory(canonicalMain);
+    setSelectedSubCategory(subCategory);
+    setSelectedSubSubCategory(subSubCategory);
   };
   
   const handleCardSubCategoryClick = (subCategory: string) => {
-    setSelectedMainCategory('Todos');
-    setSelectedSubCategory(subCategory);
     if (isCategorySheetOpen) {
       setIsCategorySheetOpen(false);
     }
+    setSelectedMainCategory('Todos');
+    setSelectedSubCategory(subCategory);
+    setSelectedSubSubCategory('Todos');
   };
   
-  const handleGoToEditor = (quote: QuoteWithAuthor) => {
+  const handleGoToEditor = useCallback((quote: QuoteWithAuthor, layoutId?: string, backgroundId?: string) => {
     const params = new URLSearchParams();
     params.set('quote', encodeURIComponent(quote.quote));
+    if (layoutId) {
+      params.set('layoutId', layoutId);
+    }
+    if (backgroundId) {
+      params.set('backgroundId', backgroundId);
+    }
     if (quote.category) {
       params.set('category', quote.category);
     }
@@ -436,12 +806,149 @@ export function FrasesClientPage({
       params.set('subCategory', quote.subCategory);
     }
     router.push(`/editor-de-video?${params.toString()}`);
-  }
+  }, [router]);
 
-  
+  const handleEditCadastro = useCallback((quote: QuoteWithAuthor) => {
+    const params = new URLSearchParams();
+    params.set('quote', quote.quote);
+    if (quote.author) params.set('author', quote.author);
+    if (quote.sheetName) params.set('sheet', quote.sheetName);
+    if (quote.category) params.set('cat', quote.category);
+    if (quote.subCategory) params.set('subcat', quote.subCategory);
+    if (quote.intro) params.set('intro', quote.intro);
+    if (quote.conclusion) params.set('conclusion', quote.conclusion);
+    if (quote.music) params.set('music', quote.music);
+    if (quote.description) params.set('desc', quote.description);
+    if (quote.id) params.set('id', quote.id);
+    if (quote.rowNumber) params.set('row', quote.rowNumber.toString());
+    
+    router.push(`/cadastro?${params.toString()}`);
+  }, [router]);
 
-    const memeEditorState = quoteForMeme ? getMemeEditorState(quoteForMeme.quote, profile) : null;
-    const breadcrumbSubCategories = initialSubCategories[selectedMainCategory] || [];
+  const selectedLayoutTemplate = quoteForMeme?.layoutId ? templates.find(t => t.id === quoteForMeme.layoutId) : undefined;
+  const selectedBackgroundTemplate = quoteForMeme?.backgroundId ? templates.find(t => t.id === quoteForMeme.backgroundId) : undefined;
+  const memeEditorState = quoteForMeme ? getMemeEditorState(quoteForMeme.quote, profile, selectedLayoutTemplate, selectedBackgroundTemplate) : null;
+  const matchingHierarchyKey = selectedMainCategory.toLowerCase() !== 'todos'
+    ? Object.keys(initialHierarchy).find(k => k.toLowerCase().trim() === selectedMainCategory.toLowerCase().trim())
+    : undefined;
+  const currentHierarchySubs = matchingHierarchyKey ? (initialHierarchy[matchingHierarchyKey] || {}) : (initialHierarchy[selectedMainCategory] || {});
+  const breadcrumbSubCategories = selectedMainCategory.toLowerCase() !== 'todos' ? Object.keys(currentHierarchySubs).sort() : [];
+  const breadcrumbSubSubCategories = (selectedMainCategory.toLowerCase() !== 'todos' && selectedSubCategory.toLowerCase() !== 'todos')
+    ? (currentHierarchySubs[selectedSubCategory] ||
+       currentHierarchySubs[Object.keys(currentHierarchySubs).find(k => k.toLowerCase().trim() === selectedSubCategory.toLowerCase().trim()) || ''] || [])
+    : [];
+
+  const availableSubCategories = useMemo<{ name: string; count?: number }[]>(() => {
+    if (selectedMainCategory.toLowerCase() === 'todos') {
+      return globalSubCategories.map(g => ({
+        name: g.name,
+        count: g.totalCount
+      })).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    const matchingKey = Object.keys(initialHierarchy).find(
+      k => k.toLowerCase().trim() === selectedMainCategory.toLowerCase().trim()
+    );
+    const catSubs = matchingKey ? (initialHierarchy[matchingKey] || {}) : (initialHierarchy[selectedMainCategory] || {});
+    const subNames = Object.keys(catSubs).filter(s => s.toLowerCase() !== 'geral');
+
+    if (subNames.length > 0) {
+      const canonicalKey = matchingKey || selectedMainCategory;
+      return subNames.map(subName => {
+        const count = categoryCounts[`${canonicalKey}-${subName}`] ?? categoryCounts[`${selectedMainCategory}-${subName}`];
+        return {
+          name: subName,
+          count: count !== undefined ? count : undefined
+        };
+      }).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    const targetMainLower = selectedMainCategory.toLowerCase().trim();
+    const visibleQuotes = isAdmin ? allQuotes.filter(q => !hiddenQuotes.includes(q.id)) : allQuotes;
+    const subMap = new Map<string, { name: string; count: number }>();
+
+    visibleQuotes.forEach(q => {
+      if (q.sheetName && q.sheetName.toLowerCase().trim() === targetMainLower) {
+        const cat1 = q.subCategory?.trim() || '';
+        const cat2 = q.category?.trim() || '';
+        [cat1, cat2].forEach(cat => {
+          if (cat && cat.toLowerCase() !== 'geral') {
+            const key = cat.toLowerCase();
+            const formatted = cat.charAt(0).toUpperCase() + cat.slice(1);
+            if (!subMap.has(key)) {
+              subMap.set(key, { name: formatted, count: 0 });
+            }
+            subMap.get(key)!.count += 1;
+          }
+        });
+      }
+    });
+
+    return Array.from(subMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [selectedMainCategory, initialHierarchy, globalSubCategories, categoryCounts, allQuotes, hiddenQuotes, isAdmin]);
+
+  const activeGlobalSub = useMemo(() => {
+    if (selectedSubCategory === 'Todos') return null;
+    const subLower = selectedSubCategory.toLowerCase().trim();
+    return globalSubCategories.find(g => g.normalizedKey === subLower || g.name.toLowerCase().trim() === subLower) || null;
+  }, [globalSubCategories, selectedSubCategory]);
+
+  const subCategoryOptions = useMemo<{ name: string; count?: number }[]>(() => {
+    if (selectedSubCategory === 'Todos') return [];
+
+    const optionsMap = new Map<string, { name: string; count?: number }>();
+
+    // 1. Contextos da subcategoria global (com contagens reais)
+    if (activeGlobalSub && activeGlobalSub.contexts.length > 0) {
+      activeGlobalSub.contexts.forEach(ctx => {
+        optionsMap.set(ctx.name.toLowerCase(), { ...ctx });
+      });
+    }
+
+    // 2. Hierarquia da aba selecionada (ou de qualquer aba se estiver em Todos)
+    if (selectedMainCategory.toLowerCase() !== 'todos') {
+      const hierarchySubs = matchingHierarchyKey ? (initialHierarchy[matchingHierarchyKey] || {}) : (initialHierarchy[selectedMainCategory] || {});
+      const matchingKey = Object.keys(hierarchySubs).find(k => k.toLowerCase() === selectedSubCategory.toLowerCase().trim());
+      if (matchingKey && hierarchySubs[matchingKey]) {
+        hierarchySubs[matchingKey].forEach(name => {
+          const key = name.toLowerCase();
+          if (!optionsMap.has(key)) {
+            optionsMap.set(key, { name });
+          }
+        });
+      }
+    }
+
+    // 3. Fallback dinâmico diretamente nas frases:
+    // Garante que mesmo quando há apenas 1 frase e 1 categoria interna (ex: Abacate -> Notícia ou Notícia -> Abacate), ela sempre é encontrada
+    const subLower = selectedSubCategory.toLowerCase().trim();
+    const visibleQuotes = isAdmin ? allQuotes.filter(q => !hiddenQuotes.includes(q.id)) : allQuotes;
+    visibleQuotes.forEach(q => {
+      const cat1 = q.subCategory?.trim() || '';
+      const cat2 = q.category?.trim() || '';
+      const norm1 = cat1.toLowerCase();
+      const norm2 = cat2.toLowerCase();
+
+      if (norm1 === subLower || norm2 === subLower) {
+        let other = norm1 === subLower ? cat2 : cat1;
+        if (!other || other.toLowerCase() === subLower || other.toLowerCase() === 'geral') {
+          if (q.sheetName && q.sheetName.toLowerCase() !== 'todos') {
+            other = q.sheetName;
+          }
+        }
+        if (other && other.toLowerCase() !== subLower && other.toLowerCase() !== 'geral') {
+          const otherKey = other.toLowerCase();
+          const formatted = other.charAt(0).toUpperCase() + other.slice(1);
+          if (!optionsMap.has(otherKey)) {
+            optionsMap.set(otherKey, { name: formatted, count: 0 });
+          }
+          optionsMap.get(otherKey)!.count = (optionsMap.get(otherKey)!.count || 0) + 1;
+        }
+      }
+    });
+
+    return Array.from(optionsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [selectedSubCategory, selectedMainCategory, activeGlobalSub, initialHierarchy, matchingHierarchyKey, allQuotes, hiddenQuotes, isAdmin]);
   
   return (
     <>
@@ -454,11 +961,14 @@ export function FrasesClientPage({
         onRefresh={handleRefreshQuotes}
         selectedMainCategory={selectedMainCategory}
         selectedSubCategory={selectedSubCategory}
+        selectedSubSubCategory={selectedSubSubCategory}
         initialMainCategories={initialMainCategories}
-        initialSubCategories={initialSubCategories}
+        initialHierarchy={initialHierarchy}
         onMainCategorySelect={handleMainCategorySelect}
         onSubCategorySelect={handleSubCategorySelect}
+        onSubSubCategorySelect={handleSubSubCategorySelect}
         categoryCounts={categoryCounts}
+        globalSubCategories={globalSubCategories}
       />
 
       <main className="overflow-y-auto safe-area py-8">
@@ -473,11 +983,14 @@ export function FrasesClientPage({
                   onRefresh={handleRefreshQuotes}
                   selectedMainCategory={selectedMainCategory}
                   selectedSubCategory={selectedSubCategory}
+                  selectedSubSubCategory={selectedSubSubCategory}
                   initialMainCategories={initialMainCategories}
-                  initialSubCategories={initialSubCategories}
+                  initialHierarchy={initialHierarchy}
                   onMainCategorySelect={handleMainCategorySelect}
                   onSubCategorySelect={handleSubCategorySelect}
+                  onSubSubCategorySelect={handleSubSubCategorySelect}
                   categoryCounts={categoryCounts}
+                  globalSubCategories={globalSubCategories}
                 />
               </ScrollArea>
             </div>
@@ -487,13 +1000,19 @@ export function FrasesClientPage({
               pageTitle={pageTitle}
               selectedMainCategory={selectedMainCategory}
               selectedSubCategory={selectedSubCategory}
+              selectedSubSubCategory={selectedSubSubCategory}
+              initialMainCategories={initialMainCategories}
               searchTerm={searchTerm}
               sortBy={sortBy}
               isRefreshing={isRefreshing}
               breadcrumbSubCategories={breadcrumbSubCategories}
+              breadcrumbSubSubCategories={breadcrumbSubSubCategories}
+              availableSubCategories={availableSubCategories}
+              subCategoryOptions={subCategoryOptions}
               onClearFilters={() => {
                 setSelectedMainCategory('Todos');
                 setSelectedSubCategory('Todos');
+                setSelectedSubSubCategory('Todos');
                 setSearchTerm('');
               }}
               onSortChange={(sort) => {
@@ -503,8 +1022,10 @@ export function FrasesClientPage({
               onRefresh={handleRefreshQuotes}
               onOpenMobileCategories={() => setIsCategorySheetOpen(true)}
               onSubCategorySelect={handleSubCategorySelect}
+              onSubSubCategorySelect={handleSubSubCategorySelect}
               onMainCategorySelect={handleMainCategorySelect}
               onClearSearch={() => setSearchTerm('')}
+              onSearchChange={setSearchTerm}
             />
             
             {isLoading ? (
@@ -514,14 +1035,24 @@ export function FrasesClientPage({
                 quotes={filteredQuotes}
                 favorites={favorites}
                 isAdmin={isAdmin}
+                highlightedQuoteId={highlightedQuoteId}
+                layouts={layouts}
+                backgrounds={backgrounds}
+                cardLayouts={Object.fromEntries(filteredQuotes.map(q => [q.id, globalLayoutId]))}
+                cardBackgrounds={Object.fromEntries(filteredQuotes.map(q => [q.id, globalBackgroundId]))}
+                onSelectLayout={handleSelectLayout}
+                onSelectBackground={handleSelectBackground}
                 onToggleFavorite={toggleFavorite}
                 onPreviewMeme={handlePreviewMeme}
                 onCopy={handleCopy}
                 onShareMeme={handleShareMeme}
                 onGoToEditor={handleGoToEditor}
+                onEditCadastro={handleEditCadastro}
+                onQuickEditQuote={handleQuickEditQuote}
                 onShareText={handleShare}
                 onGlobalDelete={handleGlobalDelete}
                 onSubCategoryClick={handleCardSubCategoryClick}
+                onMainCategoryClick={handleCardCategoryClick}
               />
             ) : allQuotes.length === 0 ? (
               <QuotesEmptyState type="no-data" />
@@ -531,6 +1062,27 @@ export function FrasesClientPage({
           </div>
         </div>
       </main>
+
+      <AlertDialog open={!!quoteToDelete} onOpenChange={(open) => !open && setQuoteToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Frase</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta frase permanentemente do banco de dados?
+              <br/><br/>
+              <span className="italic">"{quoteToDelete?.quote}"</span>
+              <br/><br/>
+              Esta ação não pode ser desfeita e afetará todos os usuários.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={executeGlobalDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Sim, excluir do banco
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       <ClientOnly>
         {quoteForMeme && memeEditorState && (

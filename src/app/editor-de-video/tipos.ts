@@ -29,6 +29,24 @@ export interface VignetteState {
     feather: number;
 }
 
+export interface AudioTrack {
+    id: string;
+    name: string;
+    url: string;
+    type: 'imported' | 'music' | 'extracted' | 'voiceover';
+    volume: number; // 0 a 200
+    isMuted: boolean;
+    isLocked?: boolean;
+    isHidden?: boolean;
+    startTime: number; // em segundos
+    duration: number; // em segundos
+    trimStart?: number; // em segundos
+    trimEnd?: number; // em segundos
+    fadeInDuration?: number; // em segundos
+    fadeOutDuration?: number; // em segundos
+    isNormalized?: boolean;
+}
+
 export interface EditorState {
     text: string;
     fontFamily: string;
@@ -39,6 +57,8 @@ export interface EditorState {
     textAlign: "left" | "center" | "right";
     textBoxWidth: number;
     textBoxHeight: number;
+    textMarginLeft?: number;
+    textMarginRight?: number;
     textShadowBlur: number;
     textShadowOpacity: number;
     textVerticalPosition: number;
@@ -55,6 +75,7 @@ export interface EditorState {
     vignette?: VignetteState;
     videoMuted: boolean;
     videoVolume: number;
+    audioTracks?: AudioTrack[];
     aspectRatio: ProporcaoTela;
     activeTemplateId: string | null;
     showProfileSignature: boolean;

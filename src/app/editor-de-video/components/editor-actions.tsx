@@ -52,6 +52,7 @@ export function EditorActions() {
         dropShadowStyle,
         batchPages,
         setBatchState,
+        cancelarGeracaoVideo,
     } = useEditor();
     const { profile } = useProfile();
     const { addProject } = useProjects();
@@ -66,6 +67,7 @@ export function EditorActions() {
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportProgress, setExportProgress] = useState(0);
     const [videoDuration, setVideoDuration] = useState(5);
+    const [exportError, setExportError] = useState<string | null>(null);
 
     const handleCreateBatch = (quotes: string[], category: string, subCategory: string) => {
         if (!currentState) return;
@@ -164,9 +166,17 @@ export function EditorActions() {
         setExportProgress(0);
     };
 
+    const handleCancelExport = () => {
+        cancelarGeracaoVideo();
+        setIsGeneratingVideo(false);
+        setIsExportModalOpen(false);
+        setExportProgress(0);
+    };
+
     const handleStartExport = async (options: ExportOptions, isPreview: boolean) => {
         setIsGeneratingVideo(true);
         setExportProgress(0);
+        setExportError(null);
         
         try {
             const { blob, error } = await onExportMP4(options, (p) => setExportProgress(p));
@@ -188,20 +198,27 @@ export function EditorActions() {
                    document.body.removeChild(link);
                 }
                 
-                toast({ title: 'Sucesso!', description: 'O vídeo foi gerado corretamente.' });
+                toast({ title: 'Sucesso! ⚡', description: 'O vídeo foi gerado com sucesso e o download foi iniciado.' });
+                
+                // Aguarda 1 segundo para garantir que o navegador iniciou o download antes de fechar o modal
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                
                 setIsExportModalOpen(false); // Fecha o modal apenas se deu sucesso
             } else {
+                setExportError(error || 'Não foi possível gerar o vídeo. Tente novamente.');
                 toast({ 
                   variant: 'destructive', 
                   title: 'Erro de Exportação', 
-                  description: error || 'Não foi possível gerar o vídeo. Tente recarregar a página.' 
+                  description: error || 'Não foi possível gerar o vídeo. Tente novamente.' 
                 });
             }
         } catch (error: any) {
+            const msg = error?.message || 'Ocorreu um erro ao processar o vídeo.';
+            setExportError(msg);
             toast({ 
               variant: 'destructive', 
               title: 'Erro Crítico', 
-              description: `Ocorreu um erro ao processar o vídeo: ${error.message || 'Erro desconhecido'}` 
+              description: msg 
             });
         } finally {
             setIsGeneratingVideo(false);
@@ -373,7 +390,13 @@ export function EditorActions() {
                isExporting={isGeneratingVideo}
                progress={exportProgress}
                durationSeconds={videoDuration}
-               onClose={() => !isGeneratingVideo && setIsExportModalOpen(false)}
+               errorMessage={exportError}
+               onClearError={() => setExportError(null)}
+               onClose={() => {
+                   setExportError(null);
+                   setIsExportModalOpen(false);
+               }}
+               onCancel={handleCancelExport}
                onExport={handleStartExport}
             />
         )}

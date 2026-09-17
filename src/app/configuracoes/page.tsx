@@ -4,21 +4,38 @@
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Moon, Sun, Laptop } from "lucide-react"
+import { Moon, Sun, Laptop, FileText, Check } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
 
 // Página de configurações para o usuário.
 export default function SettingsPage() {
   const { setTheme, theme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const [defaultDescription, setDefaultDescription] = useState("")
+  const [saved, setSaved] = useState(false)
+  const { toast } = useToast()
 
   // Garante que o componente só será renderizado no cliente após a montagem.
   // Isso evita erros de hidratação com o tema.
   useEffect(() => {
     setMounted(true)
+    const savedDesc = localStorage.getItem('inspire_default_description') || ''
+    setDefaultDescription(savedDesc)
   }, [])
+
+  const handleSaveDescription = () => {
+    localStorage.setItem('inspire_default_description', defaultDescription)
+    setSaved(true)
+    toast({
+      title: "Predefinição salva!",
+      description: "A predefinição da descrição foi atualizada com sucesso."
+    })
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   return (
     <main className="overflow-y-auto">
@@ -72,6 +89,32 @@ export default function SettingsPage() {
                     </div>
                     )}
                 </CardContent>
+                </Card>
+                <Card className="mt-8">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      Predefinição da Descrição
+                    </CardTitle>
+                    <CardDescription>
+                      Defina o texto padrão que aparecerá inicialmente no campo de Descrição e # ao cadastrar uma frase.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Textarea 
+                      placeholder="Ex: Siga-nos para mais mensagens inspiradoras... #reflexao #inspiracao"
+                      value={defaultDescription}
+                      onChange={(e) => setDefaultDescription(e.target.value)}
+                      rows={4}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Dica: Use <code className="bg-muted px-1 py-0.5 rounded text-primary font-mono">{'{frase}'}</code> no texto para inserir automaticamente a frase principal na descrição.
+                    </p>
+                    <Button onClick={handleSaveDescription} className="w-full">
+                      {saved ? <Check className="mr-2 h-4 w-4" /> : null}
+                      {saved ? "Salvo com Sucesso!" : "Salvar Predefinição"}
+                    </Button>
+                  </CardContent>
                 </Card>
                 <Card className="mt-8 border-2 border-primary/20 bg-primary/5">
                   <CardHeader>

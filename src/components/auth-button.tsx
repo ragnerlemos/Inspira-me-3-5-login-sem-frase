@@ -31,13 +31,28 @@ import { toast } from '@/hooks/use-toast';
 
 export function AuthButton() {
   const auth = useAuth();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(() => auth?.currentUser || null);
+  const [loading, setLoading] = useState(() => !auth?.currentUser);
   const [loginInProgress, setLoginInProgress] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!auth) return;
+    setMounted(true);
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
+    if (auth.currentUser) {
+      setUser(auth.currentUser);
+      setLoading(false);
+    }
     
+    // Safety fallback timeout to prevent staying in loading state if network or iframe lags
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+    }, 1200);
+
     // Check for redirect result on mount
     getRedirectResult(auth)
       .then((result) => {
@@ -53,11 +68,15 @@ export function AuthButton() {
       });
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      clearTimeout(timeoutId);
       setUser(currentUser);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(timeoutId);
+      unsubscribe();
+    };
   }, [auth]);
 
   const handleLogin = async () => {
@@ -111,9 +130,9 @@ export function AuthButton() {
     }
   };
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
-      <Button variant="outline" size="sm" disabled className="rounded-full">
+      <Button variant="outline" size="sm" disabled className="rounded-full" suppressHydrationWarning>
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         Carregando...
       </Button>
@@ -128,6 +147,7 @@ export function AuthButton() {
         size="sm" 
         disabled={loginInProgress}
         className="gap-2 rounded-full font-medium"
+        suppressHydrationWarning
       >
         {loginInProgress ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -143,7 +163,7 @@ export function AuthButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full" suppressHydrationWarning>
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.photoURL || ''} alt={user.displayName || ''} />
             <AvatarFallback>

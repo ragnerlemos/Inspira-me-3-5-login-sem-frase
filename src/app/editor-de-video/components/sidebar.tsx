@@ -2,8 +2,8 @@
 
 "use client";
 
-import { useState } from "react";
-import { Wand2, RectangleHorizontal, RectangleVertical, Square, LayoutTemplate, UserCheck, ImageUp, Paintbrush, Type, CaseSensitive, Pipette, AlignLeft, Bold, MoveVertical, Baseline, Film, UserCheck as UserCheckIcon, SmilePlus, Layers } from "lucide-react";
+import { useState, useRef, MouseEvent } from "react";
+import { Wand2, RectangleHorizontal, RectangleVertical, Square, LayoutTemplate, UserCheck, ImageUp, Paintbrush, Type, CaseSensitive, Pipette, AlignLeft, Bold, MoveVertical, Baseline, Film, UserCheck as UserCheckIcon, SmilePlus, Layers, Volume2, Music } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { ProfileData } from "@/hooks/use-profile";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -19,6 +19,8 @@ import { SidebarCanvas, type AspectRatioOption } from "./sidebar-canvas";
 import { SidebarCores } from "./sidebar-cores";
 import { SidebarFiltro } from "./sidebar-filtro";
 import { SidebarCamadas } from "./sidebar-camadas";
+import { SidebarAudio } from "./sidebar-audio";
+import { SidebarMusica } from "./sidebar-musica";
 import { ControleAssinatura, type ControleAssinaturaProps } from "./sidebar-assinatura";
 import { ControleLogo, type ControleLogoProps } from "./sidebar-logo";
 import { BotaoRecurso } from "../botao-recurso";
@@ -135,6 +137,10 @@ export function Sidebar({
                 return <SidebarFiltro filmColor={filmColor} setFilmColor={setFilmColor} filmOpacity={filmOpacity} setFilmOpacity={setFilmOpacity} />;
             case 'camadas':
                 return <SidebarCamadas />;
+            case 'audio':
+                return <SidebarAudio />;
+            case 'musica':
+                return <SidebarMusica />;
             case 'estilo':
                  return (
                      <div className="w-full flex-1 flex flex-col">
@@ -170,9 +176,40 @@ export function Sidebar({
         }
     }
 
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const isDraggingRef = useRef(false);
+    const startXRef = useRef(0);
+    const scrollLeftRef = useRef(0);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (!scrollRef.current) return;
+        isDraggingRef.current = true;
+        startXRef.current = e.pageX - scrollRef.current.offsetLeft;
+        scrollLeftRef.current = scrollRef.current.scrollLeft;
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isDraggingRef.current || !scrollRef.current) return;
+        e.preventDefault();
+        const x = e.pageX - scrollRef.current.offsetLeft;
+        const walk = (x - startXRef.current) * 1.5;
+        scrollRef.current.scrollLeft = scrollLeftRef.current - walk;
+    };
+
+    const handleMouseUp = () => {
+        isDraggingRef.current = false;
+    };
+
     const mainToolbar = (
-        <ScrollArea className="w-full border-b">
-            <div className="flex h-16 items-center justify-around w-full space-x-1 px-2">
+        <div
+            ref={scrollRef}
+            className="w-full border-b whitespace-nowrap overflow-x-auto cursor-grab active:cursor-grabbing select-none scrollbar-none"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+        >
+            <div className="flex h-16 items-center w-max min-w-full space-x-1 px-2">
                 <BotaoRecurso icon={Type} label="Texto" onClick={() => handleSetControleAtivo('texto')} isActive={activeControl === 'texto'}/>
                 <BotaoRecurso icon={RectangleHorizontal} label="Canvas" onClick={() => handleSetControleAtivo('canvas')} isActive={activeControl === 'canvas'}/>
                 <BotaoRecurso icon={Paintbrush} label="Cores" onClick={() => handleSetControleAtivo('cores')} isActive={activeControl === 'cores'}/>
@@ -180,12 +217,13 @@ export function Sidebar({
                 <BotaoRecurso icon={LayoutTemplate} label="Fundo" onClick={() => handleSetControleAtivo('fundo')} isActive={activeControl === 'fundo'}/>
                 <BotaoRecurso icon={Film} label="Película" onClick={() => handleSetControleAtivo('filtro')} isActive={activeControl === 'filtro'} />
                 <BotaoRecurso icon={Layers} label="Camadas" onClick={() => handleSetControleAtivo('camadas')} isActive={activeControl === 'camadas'} />
+                <BotaoRecurso icon={Volume2} label="Áudio" onClick={() => handleSetControleAtivo('audio')} isActive={activeControl === 'audio'} />
+                <BotaoRecurso icon={Music} label="Música" onClick={() => handleSetControleAtivo('musica')} isActive={activeControl === 'musica'} />
                 <BotaoRecurso icon={LayoutTemplate} label="Modelos" onClick={() => handleSetControleAtivo('modelos')} isActive={activeControl === 'modelos'}/>
                 <BotaoRecurso icon={UserCheck} label="Assinatura" onClick={() => handleSetControleAtivo('assinatura')} isActive={activeControl === 'assinatura'}/>
                 <BotaoRecurso icon={ImageUp} label="Logo" onClick={() => handleSetControleAtivo('logo')} isActive={activeControl === 'logo'}/>
             </div>
-            <ScrollBar orientation="horizontal" className="h-2" />
-        </ScrollArea>
+        </div>
     );
 
     return (

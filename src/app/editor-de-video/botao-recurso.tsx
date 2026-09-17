@@ -17,13 +17,13 @@ export function BotaoRecurso({ icon: Icon, label, onClick, isActive }: BotaoRecu
     <Button
       variant="ghost"
       className={cn(
-        "flex flex-col items-center justify-center h-full text-muted-foreground px-3",
+        "flex flex-col items-center justify-center h-full text-muted-foreground px-3 shrink-0 min-w-[60px]",
         isActive && "text-primary bg-primary/10"
       )}
       onClick={onClick}
     >
-      <Icon className="h-5 w-5 mb-1" />
-      <span className="text-xs">{label}</span>
+      <Icon className="h-5 w-5 mb-1 shrink-0" />
+      <span className="text-xs whitespace-nowrap">{label}</span>
     </Button>
   );
 }

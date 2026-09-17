@@ -11,11 +11,11 @@ import {
   Layers, 
   LayoutTemplate, 
   MoreHorizontal, 
-  X 
+  X,
+  BookmarkPlus 
 } from "lucide-react";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEditor } from "../contexts/editor-context";
-import { useProfile } from "@/hooks/use-profile";
+import { useTemplates } from "@/hooks/use-templates";
+import { useToast } from "@/hooks/use-toast";
 import { ModeloPadrao } from "../modelos/modelo-padrao";
 import { ModeloTwitter } from "../modelos/modelo-twitter";
 
@@ -207,6 +207,8 @@ export function PageGallery({
 }: PageGalleryProps) {
   const { profile } = useProfile();
   const { baseTextStyle, textEffectsStyle, dropShadowStyle } = useEditor();
+  const { addTemplate } = useTemplates();
+  const { toast } = useToast();
 
   const galleryRef = useRef<HTMLDivElement>(null);
   const parentRef = useRef<HTMLDivElement>(null);
@@ -496,6 +498,26 @@ export function PageGallery({
                        </Button>
                     </div>
                     <div className="flex items-center gap-2">
+                       <Button 
+                         size="icon" 
+                         variant="secondary" 
+                         className="w-10 h-10 rounded-full shadow-sm hover:bg-accent transition-colors shrink-0 text-primary" 
+                         onClick={(e) => { 
+                           e.stopPropagation(); 
+                           const templateName = prompt("Digite um nome para salvar este modelo:", `Modelo ${virtualItem.index + 1}`);
+                           if (templateName) {
+                             addTemplate(templateName, page, page.backgroundStyle?.type === 'media' ? page.backgroundStyle.value : 'https://picsum.photos/400/400');
+                             toast({
+                               title: "Modelo salvo com sucesso!",
+                               description: `O modelo "${templateName}" foi salvo e persistido localmente.`,
+                             });
+                           }
+                           setShowActionsIndex(null);
+                         }}
+                         title="Salvar como Modelo"
+                       >
+                          <BookmarkPlus className="w-4 h-4" />
+                       </Button>
                        <Button 
                          size="icon" 
                          variant="secondary" 

@@ -1,18 +1,31 @@
 
 import { getSheetData, getAllSheetNames } from '@/lib/dados';
 import { CadastroClientPage } from './cadastro-client';
+import { Suspense } from 'react';
 
+export const dynamic = 'force-dynamic';
 
-
-// Agora é um Componente de Servidor que busca os dados antes de renderizar.
 export default async function CadastroPage() {
-  const sheetData = await getSheetData(true); // Para as categorias
-  const allSheetNames = await getAllSheetNames(true); // Para a lista completa de abas
+  let sheetData = {};
+  let allSheetNames: string[] = [];
+
+  try {
+    const [data, names] = await Promise.all([
+      getSheetData(false),
+      getAllSheetNames(false),
+    ]);
+    sheetData = data || {};
+    allSheetNames = names || [];
+  } catch (err) {
+    console.error('Erro ao carregar dados da planilha para cadastro:', err);
+  }
 
   return (
-    <CadastroClientPage 
-      initialSheetData={sheetData} 
-      initialSheetNames={allSheetNames}
-    />
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-muted-foreground">Carregando formulário de cadastro...</div>}>
+      <CadastroClientPage 
+        initialSheetData={sheetData} 
+        initialSheetNames={allSheetNames}
+      />
+    </Suspense>
   );
 }

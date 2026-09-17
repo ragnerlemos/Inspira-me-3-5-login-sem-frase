@@ -1,0 +1,28 @@
+
+> nextn@12.0.2025 dev
+> NODE_OPTIONS='--max-old-space-size=4096' next dev -p 3000
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env
+
+ ✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+ ✓ Ready in 2.5s
+ ○ Compiling / ...
+ ✓ Compiled / in 9.2s (904 modules)
+ GET / 307 in 10431ms
+ ✓ Compiled in 1235ms (305 modules)
+ ○ Compiling /frases ...
+ ✓ Compiled /frases in 25.4s (2363 modules)
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 684ms (2366 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 26.6s (2592 modules)
+ HEAD / 404 in 42869ms
+ GET /frases 404 in 53546ms
+ HEAD / 404 in 110ms

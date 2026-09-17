@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,6 +21,17 @@ export function CadastroSheetSelector({
     newSheetNameInput,
     onNewSheetNameChange
 }: CadastroSheetSelectorProps) {
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (selectedSheet === '__new__') {
+            const timer = setTimeout(() => {
+                inputRef.current?.focus();
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [selectedSheet]);
+
     return (
         <div className="space-y-2">
             <Label htmlFor="sheet-select" className="text-primary">Aba da Planilha</Label>
@@ -43,10 +55,11 @@ export function CadastroSheetSelector({
             </div>
             {selectedSheet === '__new__' && (
                 <Input 
+                    ref={inputRef}
                     value={newSheetNameInput}
                     onChange={(e) => onNewSheetNameChange(e.target.value)}
                     placeholder="Nome da nova aba"
-                    className="mt-2"
+                    className="mt-2 animate-in fade-in slide-in-from-top-2 border-primary/50 focus-visible:ring-primary"
                 />
             )}
         </div>
